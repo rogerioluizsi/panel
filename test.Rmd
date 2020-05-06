@@ -1,0 +1,354 @@
+---
+title: "Brazilian Secondary School - Overview of the decade"
+runtime: shiny
+output: 
+  flexdashboard::flex_dashboard
+---
+
+```{r setup, include=FALSE}
+library(flexdashboard)
+library(leaflet)
+library(shiny)
+library(tidyverse)
+library(geojsonio)
+library(sf)
+library(plotly)
+
+### Read the data
+load ("~/projects/panel/data/ufnotas.Rdata")
+load ("~/projects/panel/data/uf_years.Rdata")
+load ("~/projects/panel/data/munnotas.Rdata")
+load ("~/projects/panel/data/mun_years.Rdata")
+
+
+load ("~/projects/panel/data/mesonotas.Rdata")
+load ("~/projects/panel/data/meso_years.Rdata")
+
+
+
+
+
+
+```
+
+Geo-Overview
+======================================================================
+
+Column {data-width=600} {.tabset .tabset-fade} 
+----------------------------------------------------------------------
+
+### Estado
+
+```{r}
+
+
+### Render Map
+output$map1<-renderLeaflet({
+
+  qpal <- colorQuantile(
+    palette = "viridis", domain = ufnotas$NOTA_GERAL_MEAN, n=4
+  )
+
+  #qpal1 <- colorQuantile("YlOrRd", munnotas$NOTA_GERAL_MEAN, n = 2)
+
+  labels <- sprintf(
+    "<strong>%s</strong><br/>Média = %g<br/>N = %g <br/>DP = %g", 
+    ufnotas$UF_05, ufnotas$NOTA_GERAL_MEAN, ufnotas$QUANTIDADE, ufnotas$DP
+  ) %>% lapply(htmltools::HTML)
+
+leaflet(ufnotas) %>%
+    addTiles("//{s}.tiles.mapbox.com/v3/jcheng.map-5ebohr46/{z}/{x}/{y}.png",
+           attribution = 'Maps by <a href="http://www.mapbox.com/">Mapbox</a>'
+           ) %>%
+    addPolygons(
+      layerId = ufnotas$UF_05,
+      fillColor = ~qpal(ufnotas$NOTA_GERAL_MEAN),
+      weight = 2,
+      opacity = 1,
+      color = "white",
+      group = "UF",
+      dashArray = "3",
+      fillOpacity = 0.7,
+      highlight = highlightOptions(
+        weight = 5,
+        color = "#666",
+        dashArray = "",
+        fillOpacity = 0.7,
+        bringToFront = TRUE),
+      label = labels,
+      labelOptions = labelOptions(
+        style = list("font-weight" = "normal", padding = "3px 8px"),
+        textsize = "15px",
+        direction = "auto")
+      ) %>% 
+  addLegend(
+      pal = qpal, values = ufnotas$NOTA_GERAL_MEAN,
+      opacity = 0.7, title = "Média", group = "UF"
+    )
+})
+ 
+leafletOutput('map1')   
+
+
+#absolutePanel(top=220, right =450, fixed=TRUE, 
+#  selectInput("dim",
+#            label = "Escolha a Dimensao:",
+#            choices = c("NU_NOTA_CH_MEAN", "NU_NOTA_MT_MEAN" ,"NU_NOTA_CN_MEAN","NU_NOTA_LC_MEAN", "NOTA_GERAL_MEAN"),
+#            selected = 'NOTA_GERAL_MEAN')
+
+#)
+
+
+
+
+
+
+
+
+```
+
+### Cidade
+
+
+```{r}
+qpal2 <- colorQuantile(
+    palette = "viridis", domain = munnotas$NOTA_GERAL_MEAN, n=4
+  )
+
+
+output$map2<-renderLeaflet({
+
+
+  leaflet() %>%
+    addTiles("//{s}.tiles.mapbox.com/v3/jcheng.map-5ebohr46/{z}/{x}/{y}.png",
+           attribution = 'Maps by <a href="http://www.mapbox.com/">Mapbox</a>'
+           )%>%
+    addCircleMarkers(
+      data = munnotas, munnotas$longitude, munnotas$latitude,
+      radius = 6,
+      stroke = FALSE, fillOpacity = 0.5,
+      color = ~qpal2(munnotas$NOTA_GERAL_MEAN),
+      layerId = munnotas$CO_MUNICIPIO
+      
+    )%>%
+    addLegend(
+      pal = qpal2, values = munnotas$NOTA_GERAL_MEAN,
+      opacity = 0.7, title = "Média", group = "MUN"
+    )
+
+    
+})
+
+leafletOutput('map2')   
+
+
+```
+
+### Mesorregião
+
+```{r}
+
+output$map3<-renderLeaflet({
+
+  qpal3 <- colorQuantile(
+    palette = "viridis", domain = mesonotas$NOTA_GERAL_MEAN, n=4
+  )
+
+  labels <- sprintf(
+    "<strong>%s</strong><br/>Média = %g<br/>N = %g <br/>DP = %g", 
+    mesonotas$MESO , mesonotas$NOTA_GERAL_MEAN, mesonotas$QUANTIDADE, mesonotas$DP_NOTA_GERAL
+  ) %>% lapply(htmltools::HTML)
+
+  leaflet(mesonotas) %>%
+    addTiles("//{s}.tiles.mapbox.com/v3/jcheng.map-5ebohr46/{z}/{x}/{y}.png",
+           attribution = 'Maps by <a href="http://www.mapbox.com/">Mapbox</a>'
+           ) %>%
+    addPolygons(
+      layerId = mesonotas$GEOCODIGO,
+      fillColor = ~qpal3(mesonotas$NOTA_GERAL_MEAN),
+      weight = 2,
+      opacity = 1,
+      color = "white",
+      group = "UF",
+      dashArray = "3",
+      fillOpacity = 0.7,
+      highlight = highlightOptions(
+        weight = 5,
+        color = "#666",
+        dashArray = "",
+        fillOpacity = 0.7,
+        bringToFront = TRUE),
+      label = labels,
+      labelOptions = labelOptions(
+        style = list("font-weight" = "normal", padding = "3px 8px"),
+        textsize = "15px",
+        direction = "auto")
+      ) %>% 
+  addLegend(
+      pal = qpal3, values = mesonotas$NOTA_GERAL_MEAN,
+      opacity = 0.7, title = "Média", group = "MESORREGIAO"
+    )
+  
+})
+ 
+leafletOutput('map3')      
+
+```
+
+
+Column {data-width=350}
+--------------------------------------------------------
+### Desempenho - No ENEM ao longo dos anos [Gráfico interativo]
+```{r}
+
+
+
+
+
+
+#### Reacative Val and Observer Map Click
+
+
+rv = reactiveVal()    
+
+
+#Get City Marker
+observeEvent(input$map2_marker_click, ignoreNULL = TRUE, {
+  print(input$map2_marker_click$id)
+  df = rv()
+  CITY <- input$map2_marker_click$id  
+  df <- mun_years %>% filter( CO_MUNICIPIO== CITY)
+  rv(df)
+  })
+
+#Get UF Shape
+observeEvent(input$map1_shape_click, ignoreNULL = TRUE,  {
+  print(input$map1_shape_click$id)
+  df = rv()
+  UF <- input$map1_shape_click$id  
+  df <-  uf_years %>% filter(UF_05 == UF)%>% st_set_geometry( NULL)
+  rv(df)
+  })
+
+#Get MESO Shape
+observeEvent(input$map3_shape_click, ignoreNULL = TRUE,  {
+  print(input$map3_shape_click$id)
+  df = rv()
+  M <- input$map3_shape_click$id  
+  df <-  meso_years %>% filter(GEOCODIGO == M)%>% st_set_geometry( NULL)
+  rv(df)
+  })
+
+
+df1<-uf_years %>% group_by(CO_ANO, IN_TP_ESCOLA)%>% st_set_geometry( NULL)%>%
+  summarise(NOTA_GERAL_MEAN = mean(NOTA_GERAL_MEAN)) %>%ungroup()
+
+## Performance Graph 1
+renderPlotly({
+  
+fig <- plot_ly()
+for (i in sort(unique(df1$IN_TP_ESCOLA), decreasing = TRUE)) {
+  fig <- add_trace(fig, 
+                 data = df1[df1$IN_TP_ESCOLA==i,], 
+                 y = ~NOTA_GERAL_MEAN, 
+                 x = ~CO_ANO, 
+                 type = 'scatter', 
+                 mode = 'lines',
+                 name = paste0(i, "", '(NACIONAL)'),
+                 opacity = 0.8,
+                 line = list( width = 2, dash = 'dot'),
+                 legendgroup = 'group1'
+                 )
+}
+
+ df2 = rv()
+fig %>% add_trace(data=df2, x = ~CO_ANO, y = ~NOTA_GERAL_MEAN, type="scatter", mode = "lines", 
+                color = ~IN_TP_ESCOLA,legendgroup = 'group2')
+
+
+})
+
+plotlyOutput('fig')
+
+```
+
+
+### Infraestsrutura - Por tipo de escolas ao longo dos anos [Gráfico interativo]
+```{r}
+#################### Infrastructure Graph 2
+
+renderPlotly({
+  
+df3 <-rv()
+  
+fig2 <- plot_ly(x=sort(df3$CO_ANO), y = df3$FEQ_INFRA_ELEMENTAR, type = 'bar', name = 'ELEMENTAR') %>%
+  add_trace(y= df3$FEQ_INFRA_BASICA, name = 'BÁSICA') %>%
+  add_trace(y = df3$FEQ_INFRA_ADEQUADA, name = 'ADEQUADA')
+
+  
+})
+
+plotlyOutput("fig2")
+
+```
+
+### Titulação Docente - Por tipo de escolas ao longo dos anos [Gráfico interativo]
+```{r}
+################# Level of Study - Graph 3 
+
+
+renderPlotly({
+  
+df4 <- rv()
+
+fig3 <- plot_ly(
+  type = 'scatter',  
+  x = sort(df4$CO_ANO),
+  y = df4$TITULACAO,
+  group = as_factor(df4$IN_TP_ESCOLA),
+  color = as_factor(df4$IN_TP_ESCOLA),
+  text = paste("Índice: ", df4$TITULACAO),
+              # "<br>CH: ", df2$NU_NOTA_CH_MEAN,
+               #"<br>LC: ", df2$NU_NOTA_LC_MEAN,
+               #"<br>MT: ", df2$NU_NOTA_MT_MEAN,
+               #"<br>CN: ", df2$NU_NOTA_CN_MEAN,
+               #"<br>RED.: ", df2$NU_NOTA_RED_MEAN,
+               #"<br>MÉDIA GERAL.: ", df2$NOTA_GERAL_MEAN),
+
+  
+  
+  hoverinfo = 'text',
+  mode = 'lines+markers'
+  
+  
+)
+
+
+})
+
+plotlyOutput("fig3")
+
+
+```
+Análises Simples 
+==================================================================
+
+
+Compare 
+==================================================================
+
+
+
+
+
+ML - Análises
+===================================================================
+
+
+
+Causalidade
+==================================================================
+
+
+Sobre
+==================================================================
