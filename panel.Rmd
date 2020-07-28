@@ -5,7 +5,7 @@ output:
   flexdashboard::flex_dashboard:
     vertical_layout: scroll
     includes:
-       in_header: GA_Script.html
+       in_header: ~/projects/panel/scripts/GA_Script.html
     
   
   
@@ -20,29 +20,29 @@ require(geojsonio)
 require(sf)
 require(plotly)
 require(ggiraph)
-#require(rlang)
-#require(lazyeval)
+require(rlang)
+require(lazyeval)
 require(viridis)
 require(hrbrthemes)
 require(dummies)
 require(DT)
 require(feather)
-
+print(getwd())
 
 ### Read the data
-load ("~/projects/panel/data/ufnotas.Rdata")
-load ("~/projects/panel/data/mesonotas.Rdata")
-load ("~/projects/panel/data/munnotas.Rdata")
+load ("/data/ufnotas.Rdata")
+load ("/data/mesonotas.Rdata")
+load ("/data/munnotas.Rdata")
 
-uf_years<-read_feather ("~/projects/panel/data/uf_years.feather")
-mun_years<-read_feather ("~/projects/panel/data/mun_years.feather")
-meso_years<- read_feather ("~/projects/panel/data/meso_years.feather")
+uf_years<-read_feather ("/data/uf_years.feather")
+mun_years<-read_feather ("/data/mun_years.feather")
+meso_years<- read_feather ("/data/meso_years.feather")
 
-Sgeo_notas<-read_feather ("~/projects/panel/data/Sgeo_notas.feather")
-geo_notas<-read_feather ("~/projects/panel/data/geo_notas.feather")
+Sgeo_notas<-read_feather ("/data/Sgeo_notas.feather")
+geo_notas<-read_feather ("/data/geo_notas.feather")
 
-result_models<-read_feather ("~/projects/panel/data/result_models.feather")
-ia_group_analysis<-read_feather ("~/projects/panel/data/ia_group_analysis.feather")
+result_models<-read_feather ("/data/result_models.feather")
+ia_group_analysis<-read_feather ("/data/ia_group_analysis.feather")
 
 N1<-uf_years %>% group_by(CO_ANO, IN_TP_ESCOLA)%>%
   summarise(NOTA_GERAL_MEAN = mean(NOTA_GERAL_MEAN),
@@ -80,7 +80,7 @@ Column {data-width=500}{.tabset .tabset-fade}
 
 
 ### Render Map
-output$map1<-renderLeaflet({
+output$map1<- renderLeaflet({
   withProgress(message = 'Carregando Mapa',
                  detail = 'Aguarde...', value = 0, {
       for (i in 1:15) {
@@ -156,7 +156,7 @@ qpal2 <- colorQuantile(
   )
 
 
-output$map2<-renderLeaflet({
+output$map2<- renderLeaflet({
  withProgress(message = 'Carregando Mapa',
                  detail = 'Aguarde...', value = 0, {
       for (i in 1:15) {
@@ -213,7 +213,7 @@ leafletOutput('map2')
 
 ```{r, MESO, fig.height=10}
 
-output$map3<-renderLeaflet({
+output$map3<- renderLeaflet({
    withProgress(message = 'Carregando Mapa',
                  detail = 'Aguarde...', value = 0, {
       for (i in 1:15) {
@@ -301,7 +301,12 @@ observeEvent(input$map3_shape_click, ignoreNULL = TRUE,  {
 
 
 ## Performance Graph 1
-output$fig11<- renderPlotly({
+renderPlotly({
+  withProgress(message = 'Carregando desempenho nacionais',
+                 detail = 'Aguarde...', value = 0, {
+      for (i in 1:15) {
+        incProgress(1/15)
+      }
    
 pal <- c("red", "blue", "green") 
 p11 <- plot_ly(colors =pal)
@@ -343,9 +348,11 @@ p11 %>% layout(colorway = c('#60B247', '#586DD4', '#D45865', '#60B247', '#586DD4
              xaxis = list(title = "", tickfont=list(size=9)), 
              yaxis= list(title="Média Geral", tickfont=list(size=9), titlefont=list(size=10)),title =list(text = 'Desempenho 2009-2018', size = 8) 
             )
+  })
 })
+  
 
-plotlyOutput('fig11')
+#plotlyOutput('fig11')
 
 ```
 
@@ -353,7 +360,12 @@ plotlyOutput('fig11')
 ### 
 ```{r, INFRAMAPA, fig.height=2.5, fig.width=3}
 #################### Infrastructure Graph 2
-output$fig12<- renderPlotly({
+renderPlotly({
+  withProgress(message = 'Carregando infra nacionais',
+                 detail = 'Aguarde...', value = 0, {
+      for (i in 1:15) {
+        incProgress(1/15)
+      }
 pal <- c("red", "blue", "green") 
 p12 <- plot_ly(colors =pal)
 for (i in sort(unique(N1$IN_TP_ESCOLA))) {
@@ -393,9 +405,10 @@ p12 %>% layout(colorway = c('#60B247', '#586DD4', '#D45865', '#60B247', '#586DD4
              xaxis = list(title = "", tickfont=list(size=9)), 
              yaxis= list(title="Frequência ", tickfont=list(size=9), titlefont=list(size=10)),title =list(text = 'Infraestrutura Adequada 2009-2018', size = 8) 
             )
+  })
 })
 
-plotlyOutput('fig12')
+#plotlyOutput('fig12')
 
 #12
 
@@ -406,8 +419,8 @@ plotlyOutput('fig12')
 ```{r, TITULACAOMAPA, fig.height=2.5, fig.width=3}
 ################# Level of Study - Graph 3 
 
-output$fig13<-renderPlotly({ 
-  withProgress(message = 'Plotando gŕaficos Nacionais',
+renderPlotly({ 
+  withProgress(message = 'Carregando Titulação Nacional',
                  detail = 'Aguarde...', value = 0, {
       for (i in 1:15) {
         incProgress(1/15)
@@ -452,7 +465,7 @@ p13 %>% layout(colorway = c('#60B247', '#586DD4', '#D45865', '#60B247', '#586DD4
 })
 })
 
-plotlyOutput("fig13")
+#plotlyOutput("fig13")
 
 ```
 
@@ -462,6 +475,8 @@ Inputs {.sidebar data-width=200}
 ----------------------------------------------------------------------
 
 **Analise os estudantes por diferentes dimensões e localidades.** 
+
+Após clicar em plotar, não é possível cancelar a ação. Os gráficos demoram cerca de 60s para carregarem.
 
 
 ```{r, SIDEBARALUNO}
@@ -497,6 +512,8 @@ observeEvent(input$div,{
                        choices = locs)
 })  
   
+
+
 selectizeInput(
         'local', 'Local', choices = NULL,
         options = list(
@@ -575,7 +592,8 @@ plotarLocal21<- eventReactive(input$go,{
 #### Plot
 
 
-output$fig21<- renderggiraph({
+renderggiraph({
+  
 
 p21<- plotarLocal21()[['df']]
 dim<- plotarLocal21()[['d']]
@@ -624,7 +642,7 @@ p21<- p21 +
  })
 #
 
-ggiraphOutput("fig21")
+#ggiraphOutput("fig21")
 ```
 
 
@@ -669,7 +687,9 @@ df23<- list(df = df23, d = dim)
 
 })
 
-output$fig28<-renderPlotly({
+renderPlotly({
+   
+  
   
   p28<- plotarLocal()[['df']]
   dim<- plotarLocal()[['d']]
@@ -688,14 +708,14 @@ output$fig28<-renderPlotly({
 
   })
   
-plotlyOutput('fig28')
+#plotlyOutput('fig28')
 ```
 
 ### Discrepancia - Local
 
 ```{r,ALUNOLOCAL3, fig.height=3.5,fig.width=5}
-output$fig27<-renderPlotly({
-        
+renderPlotly({
+  
   p27<- plotarLocal()[['df']]
   dim<- plotarLocal()[['d']]
   group_cols <- c("CO_ANO", dim)
@@ -711,7 +731,7 @@ output$fig27<-renderPlotly({
   layout(legend = list(orientation = 'h'), xaxis = list(title = " "), yaxis = list(title = " Desvio padrão - média geral"))
   
 })
-plotlyOutput('fig27')
+#plotlyOutput('fig27')
 ```
 
 
@@ -721,7 +741,8 @@ plotlyOutput('fig27')
 
 
 # Graph
-output$fig23 <- renderPlotly({
+renderPlotly({
+  
   withProgress(message = 'Plotando gráficos locais',
                  detail = 'Aguarde...', value = 0, {
       for (i in 1:15) {
@@ -765,7 +786,7 @@ p23<- p23%>%add_trace(y= ~FRACAO, x= ~CO_ANO, color = interp(~x, x = as.name(dim
   
 })
 
-plotlyOutput('fig23')
+#plotlyOutput('fig23')
 ```
 
 Column 
@@ -831,7 +852,7 @@ plotarBR<-eventReactive(input$go,{
 
 #### Plot
 
-output$fig22<- renderggiraph({
+renderggiraph({
 
 p22<- plotarBR()[['df']]
 dim<- plotarBR()[['d']]
@@ -880,7 +901,7 @@ p22<- p22 +
  })
 #
 
-ggiraphOutput("fig22")
+#ggiraphOutput("fig22")
 
 
 ```
@@ -922,7 +943,7 @@ df_nacional<- list(df = df_nacional, d = dim)
 
 
 #graph
-output$fig25<-renderPlotly ({
+renderPlotly ({
   p25<- plotarBR2()[['df']]
   dim<- plotarBR2()[['d']]
   group_cols <- c("CO_ANO", dim)
@@ -940,12 +961,12 @@ output$fig25<-renderPlotly ({
   
   
 })
-plotlyOutput('fig25')
+#plotlyOutput('fig25')
 ```
 
 ### Discrepancia da média geral - Nacional {.nacional} 
 ```{r,ALUNONACIONAL4,fig.height=3.5,fig.width=5}
-output$fig26<-renderPlotly ({
+renderPlotly ({
   p26<- plotarBR2()[['df']]
   dim<- plotarBR2()[['d']]
   group_cols <- c("CO_ANO", dim)
@@ -961,14 +982,14 @@ output$fig26<-renderPlotly ({
   layout(legend = list(orientation = 'h'), xaxis = list(title = " "), yaxis = list(title = " Desvio padrão - média geral"))
   
 })
-plotlyOutput('fig26')
+#plotlyOutput('fig26')
 ```
 
 ###  Probabilidade de pertencer ao quarto superior - Nacional {.nacional} 
 
 ```{r, PROBABILIDADENACIONAL, fig.height=3.5, fig.width=5}
 
-output$fig24 <- renderPlotly({
+renderPlotly({
   
  withProgress(message = 'Plotando gráficos nacionais',
                  detail = 'Aguarde...', value = 0, {
@@ -1015,7 +1036,7 @@ p24<-p24%>%add_trace(y= ~FRACAO, x= ~CO_ANO, color = interp(~x, x = as.name(dim)
 })
   
 
-plotlyOutput('fig24')
+#plotlyOutput('fig24')
 
 ```
 
@@ -1034,8 +1055,8 @@ selectInput("dim2", "Dimensão:",
                   "Titulação" = 'TITULACAO'))
 
 
-selectInput("ano2", "Ano:",
-            c('2009', '2010', '2011', '2012', '2013','2014', '2015', '2016', '2017', '2018'))
+#selectInput("ano2", "Ano:",
+#            c('2009', '2010', '2011', '2012', '2013','2014', '2015', '2016', '2017', '2018'))
 
 
 selectInput('div2', 'Tipo Região Adm:', 
@@ -1130,8 +1151,9 @@ return(df31)
 })
 
 
-output$fig31<- renderPlotly({
+renderPlotly({
 
+ 
 p31<- plotarLocal1()
 p31 <- ggplot(p31, aes(x = IN_TP_ESCOLA, y = FREQ, fill = DIME, text = paste( N, 'Escolas',
                                                                                      '<br>', round(FREQ, 2)*100, '%', '=', DIME))) + scale_fill_viridis(discrete = T, option = 'viridis')+
@@ -1146,7 +1168,7 @@ p31<-ggplotly(p31, tooltip = "text")%>%
 
 })   
 
-plotlyOutput("fig31")
+#plotlyOutput("fig31")
   
 ```
 
@@ -1193,7 +1215,8 @@ plotarNacional1 <- eventReactive(input$go2,{
   return(df32)
 })
 
-output$fig32<- renderPlotly({
+renderPlotly({
+  
 p32<- plotarNacional1()
 p32 <- ggplot(p32, aes(x = IN_TP_ESCOLA, y = FREQ, fill =DIME,height=50, text = paste( N, 'Escolas',
                                                                                      '<br>', round(FREQ, 2)*100, '%', '=', DIME))) + scale_fill_viridis(discrete = T, option = 'viridis')+
@@ -1208,7 +1231,7 @@ p32<-ggplotly(p32, tooltip = "text")%>%
   
 })   
 
-plotlyOutput("fig32") 
+#plotlyOutput("fig32") 
 
 ```
 
@@ -1267,7 +1290,8 @@ df33<-df33%>%mutate(
 })
 
 
-output$fig33<- renderPlotly({
+renderPlotly({
+ 
 if(req(input$dim2) == "INFRA"){ 
   p33<- plotarLocal2()
   glimpse(p33)
@@ -1296,7 +1320,7 @@ else if (input$dim2 == "TITULACAO"){
 p33  
 })
 
-plotlyOutput("fig33")
+#plotlyOutput("fig33")
 
 ```
 
@@ -1350,7 +1374,7 @@ df44<-df44%>%mutate(
   
 })
 
-output$fig34<- renderPlotly({
+renderPlotly({
   
   if(req(input$dim2) == "INFRA"){
      p34<- plotarNacional2()
@@ -1375,7 +1399,7 @@ else if (req(input$dim2) == "TITULACAO"){
   
 })
  
- plotlyOutput("fig34")
+ #plotlyOutput("fig34")
 
 ```
 
@@ -1391,13 +1415,15 @@ Uma das métricas utilizadas para o poder de classificação dos modelos foi a A
 
 Explorando ainda o caráter descritivo da regressão, as variáveis de maior relevância para o modelos e com nível de singnificância menor que 0,05 possui a distribuição do grau de importância (Coeficiente Beta) ilustrada nos gráficos. 
 
-**Como interpretar os gráficos:** as linhas são a distribuição ao longo dos anos do grau de influência da variável "X", que está entre as 6 principais variáveis para cada ano ecom níve de significância menor que 0,05. Os Valores positivos são bons descritores de boas escolas ao contrário dos valores negativos. 
+**Como interpretar os gráficos:** as linhas são a distribuição ao longo dos anos do grau de influência da variável "X", que está entre as 6 principais variáveis para cada ano e com nível de significância menor que 0,05. Os Valores positivos são bons descritores de boas escolas ao contrário dos valores negativos.
+
+É possível interagir com os gráficos, excluindo variáveis e escolhendo apenas as que se repetem em todos os anos por ex.
 
 Na tabela é possivel consultar detalhadamente os resultados dos modelos para cada ano.
 
 **Artigos base:** 
 
-**Paper base:** [Where to aim? Factors that influence the performance ofBrazilian secondary schools](https://educationaldatamining.org/files/conferences/EDM2020/papers/paper_55.pdf)
+[Where to aim? Factors that influence the performance ofBrazilian secondary schools](https://educationaldatamining.org/files/conferences/EDM2020/papers/paper_55.pdf)
 
 [Data Mining Solution for Assessing Brazilian Secondary School Quality Based on ENEM and Census Data](https://www.semanticscholar.org/paper/Data-Mining-Solution-for-Assessing-Brazilian-School-Adeodato/af2c474bd7a8b981ea35a9901649589598107d0c)
 
@@ -1452,7 +1478,9 @@ MD - Análise II
 ===================================================================
 Inputs {.sidebar data-width=350}
 ----------------------------------------------------------------------
-**Resumo:** A variáveis do Censo Escolar e do ENEM foram divividas em 3 grupos. a) infraestrutura b) socioeconômico e c) educação dos pais e professores (hipótese). Para cada ano, os grupo de variáveis teve seu poder de classificação avaliado pela Área sob a curva ROC (AUC). Foi utilizado a técnica de regressão logística em uma abordaem de validação cruzada. A união de todos os grupos também foi avaliada (FULL). O estudo visa indicar como principal alternativa de melhoria da educação básica,  o investimento na educação dos pais e profesores, visto a complexidade e limitação das políticas de transferência de renda e na simplicidade dos esforços na melhoria da infraestrutura das escolas.
+**Resumo:** A variáveis do Censo Escolar e do ENEM foram divividas em 3 grupos. a) infraestrutura b) socioeconômico e c) educação dos pais e professores (hipótese). Para cada ano, os grupo de variáveis teve seu poder de classificação avaliado pela Área sob a curva ROC (AUC). 
+
+Foi utilizado a técnica de regressão logística em uma abordaem de validação cruzada. A união de todos os grupos também foi avaliada (FULL). O estudo visa indicar como principal alternativa de melhoria da educação básica,  o investimento na educação dos pais e profesores (HYPOTHESIS), visto a complexidade e limitação das políticas de transferência de renda (SOCIO) e na simplicidade dos esforços na melhoria da infraestrutura das escolas (INFRA).
 
 
 **Como interpretar os gráficos:** A distribuição ao longo dos anos do poder de predição (AUC) de boas escolas dos grupos de variávéis "X" e da união de todos eles (FULL).
@@ -1471,10 +1499,10 @@ Column {data-weigth =400}
 fig51<- ia_group_analysis%>%group_by(year, tp_escola, group)%>%summarise(AUC = mean(auc))%>%ungroup()%>%filter(tp_escola =='Federal')
 
 fig51<- fig51%>% pivot_wider(names_from = "tp_escola", values_from = "AUC")
-output$fig51<- renderPlotly({
+renderPlotly({
   plot_ly(fig51, x= ~year, y= ~Federal, color = ~group, type= 'scatter', mode= 'markers+lines')%>%layout(yaxis = list(title = 'AUC - Regressão Logística'), legend = list(orientation = 'h'), xaxis = list(title = " "))
 })
-plotlyOutput('fig51')
+#plotlyOutput('fig51')
 ```
 
 ### Escolas municipais + estaduais
@@ -1482,10 +1510,10 @@ plotlyOutput('fig51')
 fig52<- ia_group_analysis%>%group_by(year, tp_escola, group)%>%summarise(AUC = mean(auc))%>%ungroup()%>%filter(tp_escola =='Municipal+Estadual')
 
 fig52<- fig52%>% pivot_wider(names_from = "tp_escola", values_from = "AUC")
-output$fig52<- renderPlotly({
+renderPlotly({
   plot_ly(fig52, x= ~year, y= ~`Municipal+Estadual`, color = ~group, type= 'scatter', mode= 'markers+lines')%>%layout(yaxis = list(title = 'AUC - Regressão Logística'), legend = list(orientation = 'h'), xaxis = list(title = " "))
 })
-plotlyOutput('fig52')
+#plotlyOutput('fig52')
 ```
 
 Column {data-weigth =400}
@@ -1496,10 +1524,10 @@ Column {data-weigth =400}
 fig53<- ia_group_analysis%>%group_by(year, tp_escola, group)%>%summarise(AUC = mean(auc))%>%ungroup()%>%filter(tp_escola =='Privada')
 
 fig53<- fig53%>% pivot_wider(names_from = "tp_escola", values_from = "AUC")
-output$fig53<- renderPlotly({
+renderPlotly({
   plot_ly(fig53, x= ~year, y= ~Privada, color = ~group, type= 'scatter', mode= 'markers+lines')%>%layout(yaxis = list(title = 'AUC - Regressão Logística'), legend = list(orientation = 'h'), xaxis = list(title = " "))
 })
-plotlyOutput('fig53')
+#plotlyOutput('fig53')
 ```
 
 ### Todas as escolas
@@ -1507,10 +1535,10 @@ plotlyOutput('fig53')
 ```{r}
 fig54<- ia_group_analysis%>%group_by(year, group)%>%summarise(AUC = mean(auc))%>%ungroup()
 
-output$fig54<- renderPlotly({
+renderPlotly({
   plot_ly(fig54, x= ~year, y= ~AUC, color = ~group, type= 'scatter', mode= 'markers+lines')%>%layout(yaxis = list(title = 'AUC - Regressão Logística'), legend = list(orientation = 'h'), xaxis = list(title = " "))
 })
-plotlyOutput('fig54')
+#plotlyOutput('fig54')
 
 ```
 
@@ -1518,9 +1546,9 @@ Causalidade
 ==================================================================
 Inputs {.sidebar data-width=200}
 ----------------------------------------------------------------------
-A influencia da educação dos pais no desempenho dos alunos pode ser apenas uma extensão às variáveis socioeconômicas - conhecidos determinantes do desempenho escolar. Afinal, pais com maior escolaridade tendem possuir melhores empregos, melhores salários e buscam melhores escolas.
+A influência da educação dos pais no desempenho dos alunos pode ser apenas uma extensão às variáveis socioeconômicas - conhecidos determinantes do desempenho escolar. Afinal, pais com maior escolaridade tendem possuir melhores empregos, melhores salários e buscam melhores escolas.
 
-Observe a influência da educação dos pais controlando pela infraestutrura escolar e pela renda per capita.
+Em uma abordatem de estratificação - não robusta a variáveis não observáveis-  é possível confirmar a influência da educação dos pais controlando pela infraestutrura escolar e pela renda per capita.
 ```{r}
 
 
@@ -1534,6 +1562,7 @@ sliderInput("range",
                   label = "Controle por renda per capita:",
                   min = 0, max = 10000, value = c(119, 298))
 
+actionButton("go3", 'Plotar')
 
 Sgeo_notas_nacional<-Sgeo_notas%>%
   select(CO_ANO, CO_DEPENDENCIA_ADM, EDU_PAI, EDU_MAE,
@@ -1546,23 +1575,24 @@ Sgeo_notas_nacional<-Sgeo_notas%>%
 
 Column
 ------------------------------------------
-### Todas os alunos
+### Todos os alunos
 
 ```{r}
 
-
-output$fig78<- renderPlotly ({
-
-
-sub<-Sgeo_notas_nacional%>%
+plotarcausal <- eventReactive(input$go3,{
+  sub<-Sgeo_notas_nacional%>%
   filter(RENDA_PERCAPITA >= input$range[1] & RENDA_PERCAPITA <= input$range[2])%>%filter(get(input$INFRA) ==1)
+  
+})
 
-sub<-sub%>%mutate(
+renderPlotly ({
+  sub<- plotarcausal()
+  sub<-sub%>%
+    mutate(
   QUARTILE = ntile(NU_NOTA_GERAL, 4),
 )
 
 sub$QUARTILE<-if_else(sub$QUARTILE!=4, 0,1)
-
 
 trace1<- sub%>%group_by(EDU_MAE)%>%summarise(
   prop = mean(QUARTILE),
@@ -1576,7 +1606,7 @@ trace2<- sub%>%group_by(EDU_PAI)%>%summarise(
 
 
 
-fig1<-plot_ly(trace1, x= ~EDU_MAE, y= ~prop, 
+plot_ly(trace1, x= ~EDU_MAE, y= ~prop, 
         type ='scatter', mode ='lines', color = 'orange', name ='Educação da Mãe',
         hoverinfo = 'text',
             text = ~paste('</b>Educação do Mãe:</b> 
@@ -1589,12 +1619,12 @@ fig1<-plot_ly(trace1, x= ~EDU_MAE, y= ~prop,
                           </br> Proporção: ', trace2$prop,
                           '</br> Quantidade de alunos: ', trace2$quantidade))%>%
   layout(yaxis = list(title = 'Concentraçao de bons alunos'), xaxis = list(title =""))%>%
-  add_lines(x=trace1$EDU_MAE, y = 0.25, line =list(width = 0.2, dash = 'dash', color = "black"))
+  add_lines(x=trace1$EDU_MAE, y = 0.25, line =list(width = 0.2, dash = 'dash', color = "black"), name = 'Desejado')
 
 
 })
 
-plotlyOutput('fig78')
+#plotlyOutput('fig78')
 
 
 ```
@@ -1602,23 +1632,22 @@ plotlyOutput('fig78')
 ### Alunos de escolas municipais + estaduais
 
 ```{r}
-output$fig79<- renderPlotly({
-sub<-Sgeo_notas_nacional%>%filter(CO_DEPENDENCIA_ADM=='Municipal+Estadual')%>%
-  filter(RENDA_PERCAPITA >= input$range[1] & RENDA_PERCAPITA <= input$range[2])%>%filter(get(input$INFRA) ==1)
-
-sub<-sub%>%mutate(
+renderPlotly({
+sub2<- plotarcausal()
+glimpse(sub2)
+sub2<-sub2%>%filter(CO_DEPENDENCIA_ADM=='Municipal+Estadual')%>%
+    mutate(
   QUARTILE = ntile(NU_NOTA_GERAL, 4),
 )
 
-sub$QUARTILE<-if_else(sub$QUARTILE!=4, 0,1)
+sub2$QUARTILE<-if_else(sub2$QUARTILE!=4, 0,1)
 
-
-trace1<- sub%>%group_by(EDU_MAE)%>%summarise(
+trace1<- sub2%>%group_by(EDU_MAE)%>%summarise(
   prop = mean(QUARTILE),
   quantidade = n()
 )
 
-trace2<- sub%>%group_by(EDU_PAI)%>%summarise(
+trace2<- sub2%>%group_by(EDU_PAI)%>%summarise(
   prop = mean(QUARTILE),
   quantidade = n()
 )
@@ -1626,19 +1655,22 @@ trace2<- sub%>%group_by(EDU_PAI)%>%summarise(
 
 
 plot_ly(trace1, x= ~EDU_MAE, y= ~prop, 
-        type ='scatter', mode ='lines', color = 'orange', name ='Educação da Mãe')%>%
+        type ='scatter', mode ='lines', color = 'orange', name ='Educação da Mãe',
+        hoverinfo = 'text',
+            text = ~paste('</b>Educação do Mãe:</b> 
+                          </br> Proporção: ', trace1$prop,
+                          '</br> Quantidade de alunos: ', trace1$quantidade))%>%
   add_trace(x =trace2$EDU_PAI, y= trace2$prop, 
             mode = 'lines', color = 'blue', name = 'Educação do Pai',
             hoverinfo = 'text',
             text = ~paste('</b>Educação do Pai:</b> 
                           </br> Proporção: ', trace2$prop,
                           '</br> Quantidade de alunos: ', trace2$quantidade))%>%
-  layout(yaxis = list(title = 'Concentraçao de bons alunos'), xaxis = list(title =""), title='Proporção de bons alunos pela ecolaridade dos pais')
-
-
+  layout(yaxis = list(title = 'Concentraçao de bons alunos'), xaxis = list(title =""))%>%
+  add_lines(x=trace1$EDU_MAE, y = 0.25, line =list(width = 0.2, dash = 'dash', color = "black"), name = 'Desejado')
 })
 
-plotlyOutput('fig79')
+#plotlyOutput('fig79')
 
 ```
 
@@ -1647,23 +1679,22 @@ Column
 ### Alunos de escolas privadas
 ```{r}
 
-output$fig80<- renderPlotly({
-sub<-Sgeo_notas_nacional%>%filter(CO_DEPENDENCIA_ADM=='Privada')%>%
-  filter(RENDA_PERCAPITA >= input$range[1] & RENDA_PERCAPITA <= input$range[2])%>%filter(get(input$INFRA) ==1)
+renderPlotly({
+sub3<- plotarcausal()
 
-sub<-sub%>%mutate(
+sub3<-sub3%>%filter(CO_DEPENDENCIA_ADM=='Privada')%>%
+    mutate(
   QUARTILE = ntile(NU_NOTA_GERAL, 4),
 )
 
-sub$QUARTILE<-if_else(sub$QUARTILE!=4, 0,1)
+sub3$QUARTILE<-if_else(sub3$QUARTILE!=4, 0,1)
 
-
-trace1<- sub%>%group_by(EDU_MAE)%>%summarise(
+trace1<- sub3%>%group_by(EDU_MAE)%>%summarise(
   prop = mean(QUARTILE),
   quantidade = n()
 )
 
-trace2<- sub%>%group_by(EDU_PAI)%>%summarise(
+trace2<- sub3%>%group_by(EDU_PAI)%>%summarise(
   prop = mean(QUARTILE),
   quantidade = n()
 )
@@ -1671,19 +1702,22 @@ trace2<- sub%>%group_by(EDU_PAI)%>%summarise(
 
 
 plot_ly(trace1, x= ~EDU_MAE, y= ~prop, 
-        type ='scatter', mode ='lines', color = 'orange', name ='Educação da Mãe')%>%
+        type ='scatter', mode ='lines', color = 'orange', name ='Educação da Mãe',
+        hoverinfo = 'text',
+            text = ~paste('</b>Educação do Mãe:</b> 
+                          </br> Proporção: ', trace1$prop,
+                          '</br> Quantidade de alunos: ', trace1$quantidade))%>%
   add_trace(x =trace2$EDU_PAI, y= trace2$prop, 
             mode = 'lines', color = 'blue', name = 'Educação do Pai',
             hoverinfo = 'text',
             text = ~paste('</b>Educação do Pai:</b> 
                           </br> Proporção: ', trace2$prop,
                           '</br> Quantidade de alunos: ', trace2$quantidade))%>%
-  layout(yaxis = list(title = 'Concentraçao de bons alunos'), xaxis = list(title =""))
-
-
+  layout(yaxis = list(title = 'Concentraçao de bons alunos'), xaxis = list(title =""))%>%
+  add_lines(x=trace1$EDU_MAE, y = 0.25, line =list(width = 0.2, dash = 'dash', color = "black"), name = 'Desejado')
 })
 
-plotlyOutput('fig80')
+#plotlyOutput('fig80')
 
 ```
 
@@ -1691,23 +1725,22 @@ plotlyOutput('fig80')
 
 ```{r}
 
-output$fig81<- renderPlotly({
-sub<-Sgeo_notas_nacional%>%filter(CO_DEPENDENCIA_ADM=='Federal')%>%
-  filter(RENDA_PERCAPITA >= input$range[1] & RENDA_PERCAPITA <= input$range[2])%>%filter(get(input$INFRA) ==1)
+renderPlotly({
+sub4<- plotarcausal()
 
-sub<-sub%>%mutate(
+sub4<-sub4%>%filter(CO_DEPENDENCIA_ADM=='Federal')%>%
+    mutate(
   QUARTILE = ntile(NU_NOTA_GERAL, 4),
 )
 
-sub$QUARTILE<-if_else(sub$QUARTILE!=4, 0,1)
+sub4$QUARTILE<-if_else(sub4$QUARTILE!=4, 0,1)
 
-
-trace1<- sub%>%group_by(EDU_MAE)%>%summarise(
+trace1<- sub4%>%group_by(EDU_MAE)%>%summarise(
   prop = mean(QUARTILE),
   quantidade = n()
 )
 
-trace2<- sub%>%group_by(EDU_PAI)%>%summarise(
+trace2<- sub4%>%group_by(EDU_PAI)%>%summarise(
   prop = mean(QUARTILE),
   quantidade = n()
 )
@@ -1715,19 +1748,23 @@ trace2<- sub%>%group_by(EDU_PAI)%>%summarise(
 
 
 plot_ly(trace1, x= ~EDU_MAE, y= ~prop, 
-        type ='scatter', mode ='lines', color = 'orange', name ='Educação da Mãe')%>%
+        type ='scatter', mode ='lines', color = 'orange', name ='Educação da Mãe',
+        hoverinfo = 'text',
+            text = ~paste('</b>Educação do Mãe:</b> 
+                          </br> Proporção: ', trace1$prop,
+                          '</br> Quantidade de alunos: ', trace1$quantidade))%>%
   add_trace(x =trace2$EDU_PAI, y= trace2$prop, 
             mode = 'lines', color = 'blue', name = 'Educação do Pai',
             hoverinfo = 'text',
             text = ~paste('</b>Educação do Pai:</b> 
                           </br> Proporção: ', trace2$prop,
                           '</br> Quantidade de alunos: ', trace2$quantidade))%>%
-  layout(yaxis = list(title = 'Concentraçao de bons alunos'), xaxis = list(title =""))
-
+  layout(yaxis = list(title = 'Concentraçao de bons alunos'), xaxis = list(title =""))%>%
+  add_lines(x=trace1$EDU_MAE, y = 0.25, line =list(width = 0.2, dash = 'dash', color = "black"), name = 'Desejado')
 
 })
 
-plotlyOutput('fig81')
+#plotlyOutput('fig81')
 
 ```
 
@@ -1735,42 +1772,17 @@ plotlyOutput('fig81')
 Sobre
 ==================================================================
 
-Baseado em artigos publicados pelo Paulo Adeodato e por mim com essas mesmas bases de dados, construímos um painel que reproduz a metodologia dessas pesquisas e condensa os principais resultados para o período decenal de 2009 a 2018.
+Baseado em artigos publicados com essas mesmas bases de dados, construímos um painel que reproduz a metodologia dessas pesquisas e condensa os principais resultados para o período decenal de 2009 a 2018.
 
-"Embora recentemente (jun/2020)os dados do ENEM 2019 tenham sido publicados pelo INEP, eles não foram incorporados ao Painel, pois todas as análises consideram também os dados do Censo Escolar que ainda não foram publicados para este mesmo ano."
+Embora os dados do ENEM 2019 tenham sido publicados recentemente (jun/2020) pelo INEP, eles não foram incorporados ao Painel pois todas as análises consideram também os dados do Censo Escolar que ainda não foram publicados para este mesmo ano.
 
-Os principais objetivos do Painel são: a) analisar as principais dimensões presentes nas discussões da educação nacional e que são observáveis nas bases de dados e b) observar como alguns dos resultados das pesquisas anteriores se comportam ao longo dos anos.
+**Os principais objetivos do Painel são**: a) analisar as principais dimensões presentes nas discussões da educação nacional e que são observáveis nas bases de dados e b) observar como alguns dos resultados das pesquisas anteriores se comportam ao longo dos anos.
 
 Espera-se também que possa servir de subsídio para especialistas da educação em suas pesquisas e análises. Além disso, comentários e críticas de colegas que trabalham com Educação,  Mineração de Dados e Suporte a Decisão são muito bem-vindos.
 
-Texto no medium: [Painel Interativo - Uma década do Ensino Médio brasileiro](https://medium.com/p/1c077f260349/edit)
-
-```{r}
+**Texto no Medium**: [Painel Interativo - Uma década do Ensino Médio brasileiro](https://medium.com/@rogerio.luiz/painel-interativo-uma-d%C3%A9cada-do-ensino-m%C3%A9dio-brasileiro-1c077f260349)
 
 
-
-renderTable({
-    data.frame(Variable = names(sessioninfo()),
-               Value = as.character(Sys.info()))
-  })
-
-renderTable({
-    data.frame(Paths = as.character(.libPaths()))
-  })
-
-renderTable({
-    data.frame(Variable = names(Sys.getenv()),
-               Value = as.character(Sys.getenv()))
-  })
-
-renderTable({
-    data.frame(installed.packages())[,.(Package,Version,Built,LibPath)]
-  })
-
-
-shiny::tableOutput("packages")
-sessionInfo()
-```
 
 <style>
   .nacional {
