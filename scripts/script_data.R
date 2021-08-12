@@ -9,11 +9,11 @@ library(hrbrthemes)
 
 ####################### DATA
 
-notas <-read.csv("~/projects/panel/features_engeneering/ALL_SCHOOLS.csv") 
+notas <-read.csv("~/projects/panel/features_engeneering/ALL_SCHOOLS_v2.csv") 
 
-Snotas <-read.csv("~/projects/panel/features_engeneering/ALL_STUDENTS.csv")
+Snotas <-read.csv("~/projects/panel/features_engeneering/ALL_STUDENTS_v2_graphs.csv")
 
-mungeo <- read_csv("~/data/geodata/mun_micro_meso.csv")
+mungeo <- read.csv("~/data/geodata/mun_micro_meso.csv")
 
 ufgeo <- ("~/data/geodata/uf.json") %>%
   st_read() 
@@ -47,7 +47,7 @@ ufnotas <-geo_notas %>%
     DP = sd(NU_NOTA_GERAL)) %>%
     ungroup() 
   
-ufnotas$CO_UF<- as_factor(ufnotas$CO_UF)
+ufnotas$CO_UF<- as.factor(ufnotas$CO_UF)
 
 ufnotas <- left_join(ufgeo, ufnotas, by = c("GEOCODIGO" = "CO_UF"))
 
@@ -70,7 +70,7 @@ group_by(CO_UF, CO_ANO, IN_TP_ESCOLA) %>%
     FEQ_INFRA_AVANCADA = mean(IN_INFRA_AVANCADA)) %>%
   ungroup()
 
-uf_years$CO_UF<- as_factor(uf_years$CO_UF)
+uf_years$CO_UF<- as.factor(uf_years$CO_UF)
 
 uf_years <- left_join(ufgeo, uf_years, by = c("GEOCODIGO" = "CO_UF"))
 
@@ -131,7 +131,7 @@ mun_years <- geo_notas %>%
      DP_NOTA_GERAL = sd(NU_NOTA_GERAL)) %>%
    ungroup() 
  
- mesonotas$cod_uf_meso <- as_factor(mesonotas$cod_uf_meso)
+ mesonotas$cod_uf_meso <- as.factor(mesonotas$cod_uf_meso)
  mesonotas <- left_join(mesogeo, mesonotas,by =c('GEOCODIGO'= 'cod_uf_meso'))
  
  
@@ -154,7 +154,7 @@ mun_years <- geo_notas %>%
      FEQ_INFRA_AVANCADA = mean(IN_INFRA_AVANCADA)) %>%
    ungroup() 
  
- meso_years$cod_uf_meso <- as_factor(meso_years$cod_uf_meso)
+ meso_years$cod_uf_meso <- as.factor(meso_years$cod_uf_meso)
  meso_years <- left_join(mesogeo, meso_years,by =c('GEOCODIGO'= 'cod_uf_meso'))
  
  
@@ -195,7 +195,7 @@ dimensions_nacional[[var]] <- df
 
 geo_notas_nacional<-geo_notas%>% 
   dplyr::select(NU_NOTA_GERAL, CO_ANO, CO_DEPENDENCIA_ADM, TITULACAO, IN_INFRA_NENHUMA, IN_INFRA_ELEMENTAR, 
-          IN_INFRA_BASICA, IN_INFRA_ADEQUADA, IN_INFRA_AVANCADA, NU_GRADUACAO, NU_ESPECIALIZACAO, NU_MESTRADO, NU_DOUTORADO)
+          IN_INFRA_BASICA, IN_INFRA_ADEQUADA, IN_INFRA_AVANCADA)
  
 geo_notas_nacional<- geo_notas_nacional%>%
    group_by(CO_ANO)%>%
