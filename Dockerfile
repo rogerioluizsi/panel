@@ -47,7 +47,7 @@ RUN R -e "install.packages(c('shiny', 'rmarkdown','flexdashboard','knitr','rgeos
 # copy the app to the image
 RUN mkdir -p /root/projects/panel/scripts
 COPY panel.Rmd /root/projects/panel/
-COPY scripts/GA_Script.html /root/projects/panel/scripts/
+COPY GA_Script.html /root/projects/panel/scripts/
 
 #COPY Rprofile.site /usr/lib/R/etc/
 
