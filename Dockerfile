@@ -46,14 +46,14 @@ RUN R -e "install.packages(c('shiny', 'rmarkdown','flexdashboard','knitr','rgeos
 
 # copy the app to the image
 RUN mkdir -p /root/projects/panel/scripts
-COPY panel.Rmd /root/projects/panel/
-COPY scripts/GA_Script.html /root/projects/panel/scripts/
+#COPY app/panel.Rmd /root/projects/panel/
+#COPY scripts/GA_Script.html /root/projects/panel/
 
 #COPY Rprofile.site /usr/lib/R/etc/
 
 EXPOSE 3838
 
-CMD ["R", "-e", "rmarkdown::run('/root/projects/panel/panel.Rmd', shiny_args = list(host = '0.0.0.0', port = 3838))"]
+CMD ["R", "-e", "rmarkdown::run('/data/panel.Rmd', shiny_args = list(host = '0.0.0.0', port = 3838))"]
 
 
 #CMD ["R", "-e", "rmarkdown::run('/root/projects/panel/panel.Rmd')"]
