@@ -1,0 +1,3 @@
+In this notebook, I analyzed the causal effect of parents education, school infrastructure and socioeconomic profile for  brazilian secondary students of public  schools. I am using ENEM and Census Data for the last decade. 
+
+I applyed severeal techniques of econometrics and machine learning.

@@ -1,0 +1,50 @@
+1602114481342:library(ggplot2)   # plot
+1602114566812:install.packages(-c('ggplot2','glmnet', 'grf', 'sandwich', 'balanceHD'))
+1602114577049:install.packages(c('ggplot2','glmnet', 'grf', 'sandwich', 'balanceHD'))
+1602114898174:devtools::install_github("r-lib/devtools")
+1602114939788:install.packages("devtools")
+1602115146201:devtools::install_github("r-lib/devtools")
+1602115464664:install.packages('feather')
+1602115535208:## seed
+1602115535211:set.seed(202010)
+1602115535217:library(ggplot2)   # plot
+1602115535805:library(glmnet)    # lasso
+1602115537799:library(grf)       # generalized random forests
+1602115537992:library(sandwich)  # for robust CIs
+1602115538044:library(devtools)  # install from GitHub
+1602115606760:install.packages("devtools")
+1602115627763:library(devtools)
+1602115746273:## seed
+1602115746276:set.seed(202010)
+1602115746284:library(ggplot2)   # plot
+1602115747174:library(glmnet)    # lasso
+1602115749091:library(grf)       # generalized random forests
+1602115749339:library(sandwich)  # for robust CIs
+1602115749430:library(devtools)  # install from GitHub
+1602115750454:#install_github("swager/balanceHD") #Run this if you have not installed balanceHD before
+1602115750617:library(balanceHD) # approximate residual balancing
+1602115777697:install.packages("balanceHD")
+1602115787392:## seed
+1602115787396:set.seed(202010)
+1602115787402:library(ggplot2)   # plot
+1602115787405:library(glmnet)    # lasso
+1602115787407:library(grf)       # generalized random forests
+1602115787410:library(sandwich)  # for robust CIs
+1602115787413:library(devtools)  # install from GitHub
+1602115787416:#install_github("swager/balanceHD") #Run this if you have not installed balanceHD before
+1602115787602:library(balanceHD) # approximate residual balancing
+1602115909403:install_github("swager/balanceHD")
+1602115932893:## seed
+1602115932897:set.seed(202010)
+1602115932902:library(ggplot2)   # plot
+1602115932905:library(glmnet)    # lasso
+1602115932908:library(grf)       # generalized random forests
+1602115932911:library(sandwich)  # for robust CIs
+1602115932914:library(devtools)  # install from GitHub
+1602115932917:library(balanceHD) # approximate residual balancing
+1602115932944:library(feather) # load data
+1602115933019:#load data
+1602115968114:read_feather('Sgeo_notas.feather')
+1602116038587:data<-read_feather('Sgeo_notas.feather')
+1602117201211:#Selecting features
+1602117201214:glimpse(data)
