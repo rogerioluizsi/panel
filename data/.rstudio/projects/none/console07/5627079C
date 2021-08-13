@@ -1,212 +1,0 @@
-]0;/home/rstudiorstudio@17d375ef4bdc:~$ [Krstudio@17d375ef4bdc:~$ ls
-dimensions_nacional.Rdata   geo_notas_nacional.Rdata   ia_group_analysis.Rdata	mesonotas.feather   meso_years.Rdata  munnotas.Rdata	    mun_years.Rdata	   Sgeo_notas.feather  uf_years.feather
-geo_notas.feather	    geo_notas.Rdata	       infra_years.Rdata	mesonotas.Rdata     microgeo.Rdata    munnotas_years.Rdata  result_models.feather  ufnotas.feather     uf_years.Rdata
-geo_notas_nacional.feather  ia_group_analysis.feather  mesogeo.Rdata		meso_years.feather  munnotas.feather  mun_years.feather     result_models.Rdata    ufnotas.Rdata
-]0;/home/rstudiorstudio@17d375ef4bdc:~$ [Krstudio@17d375ef4bdc:~$ git init
-Initialized empty Git repository in /home/rstudio/.git/
-]0;/home/rstudiorstudio@17d375ef4bdc:~$ git sa[Ktatus
-On branch master
-
-No commits yet
-
-Untracked files:
-  (use "git add <file>..." to include in what will be committed)
-	[31m.config/[m
-	[31m.local/[m
-	[31m.rstudio/[m
-	[31mAET.Rmd[m
-	[31mAET.nb.html[m
-	[31mSgeo_notas.feather[m
-	[31mdimensions_nacional.Rdata[m
-	[31mgeo_notas.Rdata[m
-	[31mgeo_notas.feather[m
-	[31mgeo_notas_nacional.Rdata[m
-	[31mgeo_notas_nacional.feather[m
-	[31mia_group_analysis.Rdata[m
-	[31mia_group_analysis.feather[m
-	[31minfra_years.Rdata[m
-	[31mmeso_years.Rdata[m
-	[31mmeso_years.feather[m
-	[31mmesogeo.Rdata[m
-	[31mmesonotas.Rdata[m
-	[31mmesonotas.feather[m
-	[31mmicrogeo.Rdata[m
-	[31mmun_years.Rdata[m
-	[31mmun_years.feather[m
-	[31mmunnotas.Rdata[m
-	[31mmunnotas.feather[m
-	[31mmunnotas_years.Rdata[m
-	[31mresult_models.Rdata[m
-	[31mresult_models.feather[m
-	[31muf_years.Rdata[m
-	[31muf_years.feather[m
-	[31mufnotas.Rdata[m
-	[31mufnotas.feather[m
-
-nothing added to commit but untracked files present (use "git add" to track)
-]0;/home/rstudiorstudio@17d375ef4bdc:~$ vim .gitigo[K[Kgnore
-bash: vim: command not found
-]0;/home/rstudiorstudio@17d375ef4bdc:~$ vim .gitignore[1P .gitignore
-bash: vi: command not found
-]0;/home/rstudiorstudio@17d375ef4bdc:~$ vi .gitignore[1P .gitignore[1P .gitignoren .gitignorea .gitignoren .gitignoreo .gitignore
-bash: nano: command not found
-]0;/home/rstudiorstudio@17d375ef4bdc:~$ nano .gitignore[1P.gitignore[1P.gitignore[1P.gitignore[1P.gitignore[1P.gitignore^C
-]0;/home/rstudiorstudio@17d375ef4bdc:~$ sudo apt- i[K[K[K i[Kinstall vim
-[sudo] password for rstudio: 
-rstudio is not in the sudoers file.  This incident will be reported.
-]0;/home/rstudiorstudio@17d375ef4bdc:~$ git add AET.Rmd 
-]0;/home/rstudiorstudio@17d375ef4bdc:~$ git commit -M[Km ""i"n"i"t"i"a"l" "c"o"m"i"m"[1P"[1P"m"i"t"
-
-*** Please tell me who you are.
-
-Run
-
-  git config --global user.email "you@example.com"
-  git config --global user.name "Your Name"
-
-to set your account's default identity.
-Omit --global to set the identity only in this repository.
-
-fatal: unable to auto-detect email address (got 'rstudio@17d375ef4bdc.(none)')
-]0;/home/rstudiorstudio@17d375ef4bdc:~$ git config --global user.email ""r"l"c"s"f"@"c"i"n"."u"f"p"e"."b"r"[C
-]0;/home/rstudiorstudio@17d375ef4bdc:~$ git config --global user.email "rlcsf@cin.ufpe.br"[1P "rlcsf@cin.ufpe.br"[1P "rlcsf@cin.ufpe.br"[1P "rlcsf@cin.ufpe.br"[1P "rlcsf@cin.ufpe.br"[1P "rlcsf@cin.ufpe.br"n "rlcsf@cin.ufpe.br"a "rlcsf@cin.ufpe.br"m "rlcsf@cin.ufpe.br"e "rlcsf@cin.ufpe.br"[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[1P"[1P"[1P"[1P"[1P"[1P"[1P"[1P"[1P"[1P"[1P"[1P"[1P"[1P"[1P"[1P"[1P"R"o"g"e"r"i"o"
-]0;/home/rstudiorstudio@17d375ef4bdc:~$ git config --global user.name "Rogerio"email "rlcsf@cin.ufpe.br"[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[20Pmmit -m "initial commit"^C
-]0;/home/rstudiorstudio@17d375ef4bdc:~$ git add[K[K[Kremote add causality https://github.com/rogerioluizsi/causality_01.git
-]0;/home/rstudiorstudio@17d375ef4bdc:~$ git fetch
-]0;/home/rstudiorstudio@17d375ef4bdc:~$ git fetch causality
-remote: Enumerating objects: 7, done.[K
-remote: Counting objects:  14% (1/7)[Kremote: Counting objects:  28% (2/7)[Kremote: Counting objects:  42% (3/7)[Kremote: Counting objects:  57% (4/7)[Kremote: Counting objects:  71% (5/7)[Kremote: Counting objects:  85% (6/7)[Kremote: Counting objects: 100% (7/7)[Kremote: Counting objects: 100% (7/7), done.[K
-remote: Compressing objects:  16% (1/6)[Kremote: Compressing objects:  33% (2/6)[Kremote: Compressing objects:  50% (3/6)[Kremote: Compressing objects:  66% (4/6)[Kremote: Compressing objects:  83% (5/6)[Kremote: Compressing objects: 100% (6/6)[Kremote: Compressing objects: 100% (6/6), done.[K
-remote: Total 7 (delta 0), reused 4 (delta 0), pack-reused 0[K
-Unpacking objects:  14% (1/7)Unpacking objects:  28% (2/7)Unpacking objects:  42% (3/7)Unpacking objects:  57% (4/7)Unpacking objects:  71% (5/7)Unpacking objects:  85% (6/7)Unpacking objects: 100% (7/7)Unpacking objects: 100% (7/7), 1.64 KiB | 559.00 KiB/s, done.
-From https://github.com/rogerioluizsi/causality_01
- * [new branch]      main       -> causality/main
- * [new branch]      master     -> causality/master
-]0;/home/rstudiorstudio@17d375ef4bdc:~$ git status
-On branch master
-
-No commits yet
-
-Changes to be committed:
-  (use "git rm --cached <file>..." to unstage)
-	[32mnew file:   AET.Rmd[m
-
-Untracked files:
-  (use "git add <file>..." to include in what will be committed)
-	[31m.config/[m
-	[31m.gitconfig[m
-	[31m.local/[m
-	[31m.rstudio/[m
-	[31mAET.nb.html[m
-	[31mSgeo_notas.feather[m
-	[31mdimensions_nacional.Rdata[m
-	[31mgeo_notas.Rdata[m
-	[31mgeo_notas.feather[m
-	[31mgeo_notas_nacional.Rdata[m
-	[31mgeo_notas_nacional.feather[m
-	[31mia_group_analysis.Rdata[m
-	[31mia_group_analysis.feather[m
-	[31minfra_years.Rdata[m
-	[31mmeso_years.Rdata[m
-	[31mmeso_years.feather[m
-	[31mmesogeo.Rdata[m
-	[31mmesonotas.Rdata[m
-	[31mmesonotas.feather[m
-	[31mmicrogeo.Rdata[m
-	[31mmun_years.Rdata[m
-	[31mmun_years.feather[m
-	[31mmunnotas.Rdata[m
-	[31mmunnotas.feather[m
-	[31mmunnotas_years.Rdata[m
-	[31mresult_models.Rdata[m
-	[31mresult_models.feather[m
-	[31muf_years.Rdata[m
-	[31muf_years.feather[m
-	[31mufnotas.Rdata[m
-	[31mufnotas.feather[m
-
-]0;/home/rstudiorstudio@17d375ef4bdc:~$ git pull[K[K[K[Kpush causality master
-error: src refspec master does not match any
-[31merror: failed to push some refs to 'https://github.com/rogerioluizsi/causality_01.git'
-[m]0;/home/rstudiorstudio@17d375ef4bdc:~$ git pus[Kll
-There is no tracking information for the current branch.
-Please specify which branch you want to merge with.
-See git-pull(1) for details.
-
-    git pull <remote> <branch>
-
-If you wish to set tracking information for this branch you can do so with:
-
-    git branch --set-upstream-to=causality/<branch> master
-
-]0;/home/rstudiorstudio@17d375ef4bdc:~$ git pull causality master
-From https://github.com/rogerioluizsi/causality_01
- * branch            master     -> FETCH_HEAD
-]0;/home/rstudiorstudio@17d375ef4bdc:~$ git pull causality master[Ksh causality master
-Everything up-to-date
-]0;/home/rstudiorstudio@17d375ef4bdc:~$ git push causality masterll[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C
-From https://github.com/rogerioluizsi/causality_01
- * branch            master     -> FETCH_HEAD
-Already up to date.
-]0;/home/rstudiorstudio@17d375ef4bdc:~$ git status
-On branch master
-Changes to be committed:
-  (use "git restore --staged <file>..." to unstage)
-	[32mnew file:   AET.Rmd[m
-
-Untracked files:
-  (use "git add <file>..." to include in what will be committed)
-	[31m.config/[m
-	[31m.gitconfig[m
-	[31m.local/[m
-	[31m.rstudio/[m
-	[31mAET.nb.html[m
-	[31mSgeo_notas.feather[m
-	[31mdimensions_nacional.Rdata[m
-	[31mgeo_notas.Rdata[m
-	[31mgeo_notas.feather[m
-	[31mgeo_notas_nacional.Rdata[m
-	[31mgeo_notas_nacional.feather[m
-	[31mia_group_analysis.Rdata[m
-	[31mia_group_analysis.feather[m
-	[31minfra_years.Rdata[m
-	[31mmeso_years.Rdata[m
-	[31mmeso_years.feather[m
-	[31mmesogeo.Rdata[m
-	[31mmesonotas.Rdata[m
-	[31mmesonotas.feather[m
-	[31mmicrogeo.Rdata[m
-	[31mmun_years.Rdata[m
-	[31mmun_years.feather[m
-	[31mmunnotas.Rdata[m
-	[31mmunnotas.feather[m
-	[31mmunnotas_years.Rdata[m
-	[31mresult_models.Rdata[m
-	[31mresult_models.feather[m
-	[31muf_years.Rdata[m
-	[31muf_years.feather[m
-	[31mufnotas.Rdata[m
-	[31mufnotas.feather[m
-
-]0;/home/rstudiorstudio@17d375ef4bdc:~$ git commit -m ""s"e"c"o"n"d" "c"o"m"m"i"t"[C[C[C[C[C[C "-" "f"r"o"m" "d"o"c"k"e"r"
-[master c6d6caf] second commit - from docker
- 1 file changed, 18 insertions(+)
- create mode 100644 AET.Rmd
-]0;/home/rstudiorstudio@17d375ef4bdc:~$ git commit -m "second commit - from docker"[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[Cstatus[Kpull causality master
-From https://github.com/rogerioluizsi/causality_01
- * branch            master     -> FETCH_HEAD
-Already up to date.
-]0;/home/rstudiorstudio@17d375ef4bdc:~$ git pull causality mastercommit -m "second commit - from docker"[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[Cstatus[Kpull causality mastersh[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C
-Enumerating objects: 4, done.
-Counting objects:  25% (1/4)Counting objects:  50% (2/4)Counting objects:  75% (3/4)Counting objects: 100% (4/4)Counting objects: 100% (4/4), done.
-Delta compression using up to 6 threads
-Compressing objects:  33% (1/3)Compressing objects:  66% (2/3)Compressing objects: 100% (3/3)Compressing objects: 100% (3/3), done.
-Writing objects:  33% (1/3)Writing objects:  66% (2/3)Writing objects: 100% (3/3)Writing objects: 100% (3/3), 780 bytes | 780.00 KiB/s, done.
-Total 3 (delta 0), reused 0 (delta 0)
-To https://github.com/rogerioluizsi/causality_01.git
-   93cbb6e..c6d6caf  master -> master
-]0;/home/rstudiorstudio@17d375ef4bdc:~$ git merge main
-merge: main - not something we can merge
-
-Did you mean this?
-	causality/main
