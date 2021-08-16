@@ -1943,17 +1943,20 @@ Este painel tem o intuito de explorar sob diferentes aspectos os dados do ENEM e
 Os dados foram padronizados para uma adequada comparação ao longo dos anos, permitindo uma interativa análise exploratória baseada em histórícas discussões acerca da educação brasileira. 
 
 **Os principais objetivos do Painel são**: 
-a) analisar as principais dimensões presentes nas discussões da educação nacional e que são observáveis nas bases de dados, 
 
-b) observar o comportamento dos determinantes do ensino médio ao ao longo dos anos, 
+- a) analisar as principais dimensões presentes nas discussões da educação nacional e que são observáveis nas bases de dados, 
 
-c) detectar intervenções relacionadas à evolução da qualidade das escolas de ensino médio .
+- b) observar o comportamento dos determinantes do ensino médio ao ao longo dos anos, 
+
+- c) detectar intervenções relacionadas à evolução da qualidade das escolas de ensino médio .
 
 Espera-se que este painel possa servir de subsídio para especialistas da educação em suas pesquisas e análises. 
 Além disso, comentários e críticas de colegas que trabalham com Educação,  Mineração de Dados e Suporte a Decisão são muito bem-vindos.
 
+A metodologia utilizada nas análises deste painel bem como a discussção dos principais resultados da mineração de dados foram publicadas no Congresso Brasileiro de Informática na Educação (CBIE 2021). 
 
-Autores: 
+
+**Autores**: 
 - [Rogerio Luiz](https://github.com/rogerioluizsi){target="_blank"}
 - [Paulo Adeodato](https://lemanncenter.stanford.edu/people/paulo-adeodato){target="_blank"}
 - [Kellyton Brito](https://https://kellyton.com.br/){target="_blank"}
