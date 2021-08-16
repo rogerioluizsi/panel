@@ -1,0 +1,1981 @@
+---
+title: "Painel do Ensino Médio - 2009-2019"
+runtime: shiny
+output: 
+  flexdashboard::flex_dashboard:
+    vertical_layout: scroll
+    social: [ "twitter", "facebook", "menu" ]
+    includes:
+       in_header: GA_Script.html
+    
+  
+  
+---
+
+```{r setup, include=FALSE}
+require(flexdashboard)
+require(leaflet)
+require(shiny)
+require(dplyr)
+require(tidyr)
+require(geojsonio)
+require(sf)
+require(plotly)
+require(ggiraph)
+require(rlang)
+require(lazyeval)
+require(viridis)
+require(hrbrthemes)
+require(dummies)
+require(DT)
+require(fst)
+print(getwd())
+
+### Read the data
+
+load("ufnotas.Rdata")
+load("mesonotas.Rdata")
+munnotas<- read.fst("munnotas.fst")
+
+uf_years <- read.fst ("uf_years.fst")
+mun_years <- read.fst("mun_years.fst")
+meso_years <- read.fst ("meso_years.fst")
+
+geo_notas <- read.fst("geo_notas.fst")
+Sgeo_notas <- read.fst ("Sgeo_notas.fst")
+
+
+load("multi_year_outputs.Rdata")
+load("fixed_effects_outputs.Rdata")
+
+#ia_group_analysis<-read_csv ("~/projects/panel/data/ia_group_analysis.csv")
+
+N1<-uf_years %>% group_by(CO_ANO, IN_TP_ESCOLA)%>%
+  summarise(NOTA_GERAL_MEAN = mean(NOTA_GERAL_MEAN),
+            TITULACAO = mean(TITULACAO),
+            FEQ_INFRA_NENHUMA = mean(FEQ_INFRA_NENHUMA),
+            FEQ_INFRA_ELEMENTAR = mean(FEQ_INFRA_ELEMENTAR),
+            FEQ_INFRA_BASICA = mean(FEQ_INFRA_BASICA),
+            FEQ_INFRA_ADEQUADA = mean(FEQ_INFRA_ADEQUADA),
+            FEQ_INFRA_AVANCADA = mean(FEQ_INFRA_AVANCADA)
+            ) %>%ungroup()
+
+
+```
+
+Overview {data-icon="fa-globe"}
+======================================================================
+Inputs {.sidebar data-width=200}
+----------------------------------------------------------------------
+
+O Painel do Ensino Médio (EM) Brasileiro utliza os dados do ENEM e do Censo Escolar dos anos de 2009 a 2019. 
+
+Mais de **10 milhões** de estudantes do último ano do EM de quase **300 mil** escolas escolas foram analisados.
+
+**Nesta aba** clicando no mapa é possível visualizar as séries temporais de indicadores de desempenho, infraesturura e titulação docente por diferentes regiões agrupadas por tipo de escola.
+
+**Os gráficos são interativos. Passe o mouse para mais informações e clique para adicionar/remover variáveis ** 
+
+
+Column {data-width=500}{.tabset .tabset-fade} 
+----------------------------------------------------------------------
+
+### Estado
+
+```{r, ESTADO, fig.height=10}
+
+
+### Render Map
+output$map1<- renderLeaflet({
+  withProgress(message = 'Carregando Mapa',
+                 detail = 'Aguarde...', value = 0, {
+      for (i in 1:15) {
+        incProgress(1/15)
+      }
+    
+
+  qpal <- colorQuantile(
+    palette = "viridis", domain = ufnotas$NOTA_GERAL_MEAN, n=4
+  )
+
+  #qpal1 <- colorQuantile("YlOrRd", munnotas$NOTA_GERAL_MEAN, n = 2)
+
+  labels <- sprintf(
+    "<strong>%s</strong><br/>Média Enem no Período = %g<br/>Desv. Padrão = %g", 
+    ufnotas$UF_05, ufnotas$NOTA_GERAL_MEAN, ufnotas$DP
+  ) %>% lapply(htmltools::HTML)
+
+leaflet(ufnotas) %>%
+    addTiles("//{s}.tiles.mapbox.com/v3/jcheng.map-5ebohr46/{z}/{x}/{y}.png",
+           attribution = 'Maps by <a href="http://www.mapbox.com/">Mapbox</a>'
+           ) %>%
+    addPolygons(
+      layerId = ufnotas$UF_05,
+      fillColor = ~qpal(ufnotas$NOTA_GERAL_MEAN),
+      weight = 2,
+      opacity = 1,
+      color = "white",
+      group = "UF",
+      dashArray = "3",
+      fillOpacity = 0.7,
+      highlight = highlightOptions(
+        weight = 5,
+        color = "#666",
+        dashArray = "",
+        fillOpacity = 0.7,
+        bringToFront = TRUE),
+      label = labels,
+      labelOptions = labelOptions(
+        style = list("font-weight" = "normal", padding = "3px 8px"),
+        textsize = "15px",
+        direction = "auto")
+      ) %>% 
+  addLegend(
+      pal = qpal, values = ufnotas$NOTA_GERAL_MEAN,
+      opacity = 0.7, title = "Média", group = "UF"
+    )
+})
+})
+ 
+leafletOutput('map1')   
+
+
+#absolutePanel(top=220, right =450, fixed=TRUE, 
+#  selectInput("dim",
+#            label = "Escolha a Dimensao:",
+#            choices = c("NU_NOTA_CH_MEAN", "NU_NOTA_MT_MEAN" ,"NU_NOTA_CN_MEAN","NU_NOTA_LC_MEAN", "NOTA_GERAL_MEAN"),
+#            selected = 'NOTA_GERAL_MEAN')
+
+#)
+
+
+
+
+```
+
+### Cidade
+
+
+```{r, CIDADE, fig.height=10}
+qpal2 <- colorQuantile(
+    palette = "viridis", domain = munnotas$NOTA_GERAL_MEAN, n=4
+  )
+
+
+output$map2<- renderLeaflet({
+ withProgress(message = 'Carregando Mapa',
+                 detail = 'Aguarde...', value = 0, {
+      for (i in 1:15) {
+        incProgress(1/15)
+      }
+
+  leaflet() %>%
+    addTiles("//{s}.tiles.mapbox.com/v3/jcheng.map-5ebohr46/{z}/{x}/{y}.png",
+           attribution = 'Maps by <a href="http://www.mapbox.com/">Mapbox</a>'
+           )%>%
+    addCircleMarkers(
+      data = munnotas, munnotas$longitude, munnotas$latitude,
+      radius = 6,
+      stroke = FALSE, fillOpacity = 0.5,
+      color = ~qpal2(munnotas$NOTA_GERAL_MEAN),
+      layerId = munnotas$CO_MUNICIPIO,
+      popup = munnotas$nome
+      
+      
+    )%>%
+    addLegend(
+      pal = qpal2, values = munnotas$NOTA_GERAL_MEAN,
+      opacity = 0.7, title = "Média", group = "MUN"
+    )
+
+  })   
+  
+})
+
+
+
+
+#observeEvent(input$map2_marker_mouseout$id, {
+    #leafletProxy("map2") %>% clearPopups()
+#})
+
+  # When circle is hovered over...show a popup
+  # observeEvent(input$map2_marker_mouseover$id, {
+  #   pointId <- input$map2_marker_mouseover$id
+  #   print(pointId)
+  #   lat = munnotas[munnotas$CO_MUNICIPIO == pointId, 'latitude']%>%pull(latitude)
+  #   lng = munnotas[munnotas$CO_MUNICIPIO == pointId, 'longitude']%>%pull(longitude)
+  # 
+  # 
+  #   leafletProxy("map2") %>% addPopups(lat = lat, lng = lng, as.character(pointId), layerId = "hoverPopup")
+  # })
+
+
+leafletOutput('map2')   
+
+```
+
+### Mesorregião
+
+```{r, MESO, fig.height=10}
+
+output$map3<- renderLeaflet({
+   withProgress(message = 'Carregando Mapa',
+                 detail = 'Aguarde...', value = 0, {
+      for (i in 1:15) {
+        incProgress(1/15)
+      }
+
+  qpal3 <- colorQuantile(
+    palette = "viridis", domain = mesonotas$NOTA_GERAL_MEAN, n=4
+  )
+
+  labels <- sprintf(
+    "<strong>%s</strong><br/>Média = %g<br/>N = %g <br/>DP = %g", 
+    mesonotas$MESO , mesonotas$NOTA_GERAL_MEAN, mesonotas$QUANTIDADE, mesonotas$DP_NOTA_GERAL
+  ) %>% lapply(htmltools::HTML)
+
+  leaflet(mesonotas) %>%
+    addTiles("//{s}.tiles.mapbox.com/v3/jcheng.map-5ebohr46/{z}/{x}/{y}.png",
+           attribution = 'Maps by <a href="http://www.mapbox.com/">Mapbox</a>'
+           ) %>%
+    addPolygons(
+      layerId = mesonotas$GEOCODIGO,
+      fillColor = ~qpal3(mesonotas$NOTA_GERAL_MEAN),
+      weight = 2,
+      opacity = 1,
+      color = "white",
+      group = "UF",
+      dashArray = "3",
+      fillOpacity = 0.7,
+      highlight = highlightOptions(
+        weight = 5,
+        color = "#666",
+        dashArray = "",
+        fillOpacity = 0.7,
+        bringToFront = TRUE),
+      label = labels,
+      labelOptions = labelOptions(
+        style = list("font-weight" = "normal", padding = "3px 8px"),
+        textsize = "15px",
+        direction = "auto")
+      ) %>% 
+  addLegend(
+      pal = qpal3, values = mesonotas$NOTA_GERAL_MEAN,
+      opacity = 0.7, title = "Média", group = "MESORREGIAO"
+    )
+                 })  
+})
+ 
+leafletOutput('map3')      
+
+```
+
+
+Column {data-width=550} {data-height=200}
+--------------------------------------------------------
+### Clique no mapa para comparar o local escolhido com os dados nacionais
+```{r, DESEMPENHOMAPA, fig.height=2.5, fig.width=3}
+
+#### Reacative Val and Observer Map Click
+rv = reactiveVal()    
+#Get City Marker
+observeEvent(input$map2_marker_click, ignoreNULL = TRUE, {
+  print(input$map2_marker_click$id)
+  df = rv()
+  CITY <- input$map2_marker_click$id  
+  df <- mun_years %>% filter( CO_MUNICIPIO== CITY)
+  rv(df)
+  })
+#Get UF Shape
+observeEvent(input$map1_shape_click, ignoreNULL = TRUE, {
+  print(input$map1_shape_click$id)
+  df = rv()
+  UF <- input$map1_shape_click$id  
+  df <-  uf_years %>% filter(UF_05 == UF)#%>% st_set_geometry( NULL)
+  rv(df)
+  })
+#Get MESO Shape
+observeEvent(input$map3_shape_click, ignoreNULL = TRUE,  {
+  print(input$map3_shape_click$id)
+  df = rv()
+  M <- input$map3_shape_click$id  
+  df <-  meso_years %>% filter(GEOCODIGO == M)#%>% #st_set_geometry( NULL)
+  rv(df)
+  })
+
+
+
+## Performance Graph 1
+renderPlotly({
+  withProgress(message = 'Carregando desempenho nacionais',
+                 detail = 'Aguarde...', value = 0, {
+      for (i in 1:15) {
+        incProgress(1/15)
+      }
+   
+pal <- c("red", "blue", "green") 
+p11 <- plot_ly(colors =pal)
+for (i in sort(unique(N1$IN_TP_ESCOLA))) {
+  p11 <- add_trace(p11, 
+                 data = N1[N1$IN_TP_ESCOLA==i,], 
+                 y = ~NOTA_GERAL_MEAN, 
+                 x = ~CO_ANO, 
+                 type = 'scatter', 
+                 mode = 'lines',
+                 name = paste0(i, "", '(Nacional)'),
+                 opacity = 0.8,
+                 line = list( width = 1, dash = 'dash')
+                 #legendgroup = 'group1'
+                 )
+}
+
+
+df11 = rv()
+if (length(df11)>0){
+  for (i in sort(unique(df11$IN_TP_ESCOLA))) {
+  p11 <- add_trace(p11,
+                 data = df11[df11$IN_TP_ESCOLA==i,], 
+                 y = ~NOTA_GERAL_MEAN, 
+                 x = ~CO_ANO, 
+                 type = 'scatter', 
+                 mode = 'lines+markers',
+                 name = paste0(i, "", '(Local escolhido)'),
+                 opacity = 0.8,
+                 line = list( width = 3)
+                 #showlegend = F
+                 )
+}
+}
+
+#print(glimpse(df11))
+p11 %>% layout(colorway = c('#60B247', '#586DD4', '#D45865', '#60B247', '#586DD4', '#D45865'),
+             legend = list(font = list(size=12), orientation = 'h'), 
+             xaxis = list(title = "", tickfont=list(size=9)), 
+             yaxis= list(title="Média Geral", tickfont=list(size=9), titlefont=list(size=10)),title =list(text = 'Desempenho 2009-2019', size = 8) 
+            )
+  })
+})
+  
+
+#plotlyOutput('fig11')
+
+```
+
+
+### 
+```{r, INFRAMAPA, fig.height=2.5, fig.width=3}
+#################### Infrastructure Graph 2
+renderPlotly({
+  withProgress(message = 'Carregando infra nacionais',
+                 detail = 'Aguarde...', value = 0, {
+      for (i in 1:15) {
+        incProgress(1/15)
+      }
+pal <- c("red", "blue", "green") 
+p12 <- plot_ly(colors =pal)
+for (i in sort(unique(N1$IN_TP_ESCOLA))) {
+  p12 <- add_trace(p12, 
+                 data = N1[N1$IN_TP_ESCOLA==i,], 
+                 y = ~FEQ_INFRA_ADEQUADA, 
+                 x = ~CO_ANO, 
+                 type = 'scatter', 
+                 mode = 'lines',
+                 name = paste0(i, "", '(Nacional)'),
+                 opacity = 0.8,
+                 line = list( width = 1, dash = 'dash')
+                 #legendgroup = 'group1'
+                 )
+}
+
+
+df12 = rv()
+if (length(df12)>0){
+  for (i in sort(unique(df12$IN_TP_ESCOLA))) {
+  p12 <- add_trace(p12,
+                 data = df12[df12$IN_TP_ESCOLA==i,], 
+                 y = ~FEQ_INFRA_ADEQUADA, 
+                 x = ~CO_ANO, 
+                 type = 'scatter', 
+                 mode = 'lines+markers',
+                 name = paste0(i, "", '(Local escolhido)'),
+                 opacity = 0.8,
+                 line = list( width = 3)
+                 #showlegend = F
+                 )
+}
+}
+
+p12 %>% layout(colorway = c('#60B247', '#586DD4', '#D45865', '#60B247', '#586DD4', '#D45865'),
+             legend = list(font = list(size=12), orientation = 'h'), 
+             xaxis = list(title = "", tickfont=list(size=9)), 
+             yaxis= list(title="Frequência ", tickfont=list(size=9), titlefont=list(size=10)),title =list(text = 'Infraestrutura Adequada 2009-2019', size = 8) 
+            )
+  })
+})
+
+#plotlyOutput('fig12')
+
+#12
+
+```
+
+### 
+
+```{r, TITULACAOMAPA, fig.height=2.5, fig.width=3}
+################# Level of Study - Graph 3 
+
+renderPlotly({ 
+  withProgress(message = 'Carregando Titulação Nacional',
+                 detail = 'Aguarde...', value = 0, {
+      for (i in 1:15) {
+        incProgress(1/15)
+      }
+  pal <- c("red", "blue", "green") 
+  p13 <- plot_ly(colors =pal)
+for (i in sort(unique(N1$IN_TP_ESCOLA))) {
+  p13 <- add_trace(p13, 
+                 data = N1[N1$IN_TP_ESCOLA==i,], 
+                 y = ~TITULACAO, 
+                 x = ~CO_ANO, 
+                 type = 'scatter', 
+                 mode = 'lines',
+                 name = paste0(i, "", '(Nacional)'),
+                 opacity = 0.8,
+                 line = list( width = 1, dash = 'dash')
+                 #legendgroup = 'group1'
+                 )
+}
+df13 = rv()
+if (length(df13)>0){
+ for (i in sort(unique(df13$IN_TP_ESCOLA))) {
+  p13 <- add_trace(p13,
+                 data = df13[df13$IN_TP_ESCOLA==i,], 
+                 y = ~TITULACAO, 
+                 x = ~CO_ANO, 
+                 type = 'scatter', 
+                 mode = 'lines+markers',
+                 name = paste0(i, "", '(Local escolhido)'),
+                 opacity = 0.8,
+                 line = list( width = 3)
+                 #showlegend = F
+                 )
+  }
+}
+
+p13 %>% layout(colorway = c('#60B247', '#586DD4', '#D45865', '#60B247', '#586DD4', '#D45865'),
+             legend = list(font = list(size=12), orientation = 'h'), 
+             xaxis = list(title = "", tickfont=list(size=9)), 
+             yaxis= list(title="Média Geral", tickfont=list(size=9), titlefont=list(size=10)),title =list(text = 'Titulação Docente 2009-2019', size = 8) 
+            )
+})
+})
+
+#plotlyOutput("fig13")
+
+```
+
+Escola {data-orientation=rows} 
+==================================================================
+Inputs {.sidebar data-width=200}
+----------------------------------------------------------------------
+**Analise as escolas por diferentes dimensões e localidades.** 
+
+Os gráficos demoram cerca de **10s** para carregarem
+
+```{r}
+## Infra
+#read_feather ("~/projects/panel/data/geo_notas.feather")
+
+selectInput("dim2", "Dimensão:",
+                c("Docentes" = 'TITULACAO',
+                  "Infraestrutura" = 'INFRA'
+                  ))
+
+
+#selectInput("ano2", "Ano:",
+#            c('2009', '2010', '2011', '2012', '2013','2014', '2015', '2016', '2017', '2018','2019'))
+
+
+selectInput('div2', 'Tipo Região Adm:', 
+            c('Estadual'="nome_uf", "Municipal" = 'nome', 'Mesorregião'='nome_meso'))
+
+observeEvent(input$div2,{
+  print(input$div2)
+  tb_loc <- input$div2
+  if(tb_loc == 'nome_uf'){
+    locs<- unique(geo_notas$nome_uf)}
+  else if(tb_loc == 'nome'){
+    locs<- unique(geo_notas$nome)}
+  else{
+    locs<- unique(geo_notas$nome_meso)
+  }
+  
+  
+  updateSelectizeInput(session, 'local2',
+                       choices = locs)
+})  
+  
+selectizeInput(
+        'local2', 'Local', choices = NULL,
+        options = list(
+          placeholder = 'Escolha a localidade',
+          onInitialize = I('function() { this.setValue(""); }')
+        )
+      )
+
+selectInput("dep_adm2", "Analise o desempenho temporal apenas das escolas:", 
+            c('Privadas' = "Privada", 
+              'Municipais + Estaduais' = "Municipal+Estadual",
+              'Federais' = "Federal"
+              ))           
+
+actionButton("go2", 'Plotar')  
+```
+
+
+Ref:
+[Classificação da Infraesturura - (NETO. et. al., 2013)](http://www.fcc.org.br/pesquisa/publicacoes/eae/arquivos/1786/1786.pdf)
+
+
+Rows {data-height=300}
+----------------------------------------------------------------------
+### **Local** 
+```{r}
+
+plotarLocal1 <- eventReactive(input$go2,{
+ 
+df31<-geo_notas%>%filter(get(input$div2) == input$local2)
+  
+  if(req(input$dim2) == "INFRA"){
+    
+    df31<-df31%>% group_by(CO_ANO, IN_TP_ESCOLA)%>%
+      summarise(
+        N = n(),
+        NU_NOTA_GERAL = mean(NU_NOTA_GERAL),
+        INFRA_NENHUMA = mean(IN_INFRA_NENHUMA),
+        INFRA_ELEMENTAR = mean(IN_INFRA_ELEMENTAR),
+        INFRA_BASICA = mean(IN_INFRA_BASICA),
+        INFRA_ADEQUADA = mean(IN_INFRA_ADEQUADA),
+        INFRA_AVANCADA = mean(IN_INFRA_AVANCADA))%>%
+          ungroup()%>%
+          gather("DIME", "FREQ", INFRA_BASICA, INFRA_ELEMENTAR,
+             INFRA_ADEQUADA,INFRA_AVANCADA, INFRA_NENHUMA)
+        
+        #return(df31)
+    print('df31, infra plotarlocal1')
+    glimpse(df31)
+
+
+ } else if (req(input$dim2) == "TITULACAO"){
+    
+   df31<-df31%>% group_by(CO_ANO, IN_TP_ESCOLA)%>%
+      summarise(
+        S_GRADUACAO = sum(NU_GRADUACAO),
+        S_ESPECIALIZACAO = sum(NU_ESPECIALIZACAO),
+        S_MESTRADO = sum(NU_MESTRADO),
+        S_DOUTORADO = sum(NU_DOUTORADO),
+        N = S_GRADUACAO+S_ESPECIALIZACAO+S_MESTRADO+S_DOUTORADO,
+        GRADUACAO = S_GRADUACAO/N,
+        ESPECIALIZACAO = S_ESPECIALIZACAO/N,
+        MESTRADO = S_MESTRADO/N,
+        DOUTORADO = S_DOUTORADO/N)%>%
+          ungroup()%>%
+          gather("DIME", "FREQ", GRADUACAO, ESPECIALIZACAO,
+             MESTRADO,DOUTORADO)
+    
+  print('df31, titulacao plotarlocal1')
+  glimpse(df31)
+ }
+return(df31)
+})
+
+
+renderPlotly({
+
+ 
+p31<- plotarLocal1()
+print('p31')
+glimpse(p31)
+p31 <- ggplot(p31, aes(x = IN_TP_ESCOLA, y = FREQ, fill = DIME, text = paste( N, 'Escolas',
+                                                                                     '<br>', round(FREQ, 2)*100, '%', '=', DIME))) + scale_fill_viridis(discrete = T, option = 'viridis')+
+  xlab("") + ylab("Fração") + theme(legend.title =element_blank(),legend.key.size =unit(1.2, "lines"))+ 
+    geom_bar(stat = 'identity', position = 'stack') + theme(axis.text.x = element_text(size=7, angle=28),
+                                                            axis.text.y = element_text(size=7)) + 
+    facet_grid(~ CO_ANO) + 
+       theme(strip.text.x = element_text(size = 8))
+  
+p31<-ggplotly(p31, tooltip = "text")%>%
+  layout(hovermode = "x", legend = list(font = list(size=7)), title = list( text = paste(input$local2), size = 7))
+
+})   
+
+#plotlyOutput("fig31")
+  
+```
+
+Rows {data-height=300}
+------------------------------------------
+### **Nacional** {.nacional} 
+
+```{r}
+
+plotarNacional1 <- eventReactive(input$go2,{
+  if(req(input$dim2) == "INFRA"){
+    df32<-geo_notas%>% group_by(CO_ANO, IN_TP_ESCOLA)%>%
+  summarise(
+    N = n(),
+    NU_NOTA_GERAL = mean(NU_NOTA_GERAL),
+    INFRA_NENHUMA = mean(IN_INFRA_NENHUMA),
+    INFRA_ELEMENTAR = mean(IN_INFRA_ELEMENTAR),
+    INFRA_BASICA = mean(IN_INFRA_BASICA),
+    INFRA_ADEQUADA = mean(IN_INFRA_ADEQUADA),
+    INFRA_AVANCADA = mean(IN_INFRA_AVANCADA)
+  ) %>%ungroup()%>%
+      gather("DIME", "FREQ", INFRA_BASICA, INFRA_ELEMENTAR, 
+             INFRA_ADEQUADA,INFRA_AVANCADA, INFRA_NENHUMA )
+    
+    
+ } 
+  else if (req(input$dim2) == "TITULACAO"){
+    
+  df32<-geo_notas%>% group_by(CO_ANO, IN_TP_ESCOLA)%>%
+      summarise(
+        S_GRADUACAO = sum(NU_GRADUACAO),
+        S_ESPECIALIZACAO = sum(NU_ESPECIALIZACAO),
+        S_MESTRADO = sum(NU_MESTRADO),
+        S_DOUTORADO = sum(NU_DOUTORADO),
+        N = S_GRADUACAO+S_ESPECIALIZACAO+S_MESTRADO+S_DOUTORADO,
+        GRADUACAO = S_GRADUACAO/N,
+        ESPECIALIZACAO = S_ESPECIALIZACAO/N,
+        MESTRADO = S_MESTRADO/N,
+        DOUTORADO = S_DOUTORADO/N)%>%
+          ungroup()%>%
+          gather("DIME", "FREQ", GRADUACAO, ESPECIALIZACAO,
+             MESTRADO,DOUTORADO)
+  }
+  return(df32)
+})
+
+renderPlotly({
+  
+p32<- plotarNacional1()
+p32 <- ggplot(p32, aes(x = IN_TP_ESCOLA, y = FREQ, fill =DIME,height=50, text = paste( N, 'Escolas',
+                                                                                     '<br>', round(FREQ, 2)*100, '%', '=', DIME))) + scale_fill_viridis(discrete = T, option = 'viridis')+
+  xlab("") + ylab("Fração") + theme(legend.title =element_blank(),legend.key.size =unit(1.2, "lines"))+ 
+    geom_bar(stat = 'identity', position = 'stack') + theme(axis.text.x = element_text(size=7, angle=28),
+                                                            axis.text.y = element_text(size=7)) + 
+    facet_grid(~ CO_ANO)+ 
+       theme(strip.text.x = element_text(size = 8)+theme_ipsum()) 
+  
+p32<-ggplotly(p32, tooltip = "text")%>%
+  layout(hovermode = "x", legend = list(font = list(size=8)), title = list(text= "Nacional"), size = 6)
+  
+})   
+
+#plotlyOutput("fig32") 
+
+```
+
+
+Rows
+----------------------------------------------------------------------
+### 3 - **Local** 
+
+```{r,fig.height=3.5, fig.width=5}
+
+plotarLocal2 <- eventReactive(input$go2,{
+#filter<- input$dep_adm2
+df33<- geo_notas%>%filter(get(input$div2) == input$local2 & IN_TP_ESCOLA == input$dep_adm2)%>%
+    select(NU_NOTA_GERAL, CO_ANO, IN_TP_ESCOLA, IN_INFRA_NENHUMA, IN_INFRA_ELEMENTAR, 
+          IN_INFRA_BASICA, IN_INFRA_ADEQUADA, IN_INFRA_AVANCADA, TITULACAO, IN_FORM_DOCENTE, DIVERSIDADE)
+  
+if (req(input$dim2) == 'INFRA') {
+
+  print("INFRA")
+  df33<- df33%>%
+    group_by(CO_ANO)%>%
+    mutate(QUARTILE = ntile(NU_NOTA_GERAL, 4))%>% ungroup()%>%gather(INDICE, IN_INFRA, 4:8)%>% 
+    group_by(CO_ANO, INDICE)%>%
+    mutate(
+      N_DIM = sum(IN_INFRA))%>%ungroup()%>%
+    filter(QUARTILE ==4)%>%
+    group_by(CO_ANO, INDICE, IN_TP_ESCOLA)%>%
+    mutate(FRACAO = sum(IN_INFRA))%>%ungroup()%>%
+    group_by(CO_ANO, INDICE)%>%
+    mutate(
+      N_DIM_Q = sum(IN_INFRA),
+      VALUE = N_DIM_Q/N_DIM)%>%ungroup()
+         
+  df33<-df33%>%dplyr::select(CO_ANO, INDICE, VALUE, N_DIM, N_DIM_Q, IN_TP_ESCOLA, FRACAO)%>%distinct()    
+  df33<-df33 %>% pivot_wider(names_from = "IN_TP_ESCOLA", values_from = "FRACAO")
+ 
+
+  out<- as.list(c("Municipal+Estadual", "Federal","Privada")[!(
+    c("Municipal+Estadual", "Federal","Privada") %in% names(df33))])
+
+  for (i in out){
+    df33[[i]]<- 0}
+
+
+  df33<-df33%>%mutate(
+    Privada =  Privada/N_DIM_Q,
+    `Municipal+Estadual` = `Municipal+Estadual`/N_DIM_Q,
+    Federal= Federal/N_DIM_Q)%>%replace(is.na(.), 0)
+}
+
+else if (req(input$dim2)=="TITULACAO"){  
+  print("TITULACAO")
+  df33<- df33%>%group_by(CO_ANO)%>%
+    summarise(TITULACAO = mean(TITULACAO),
+              EXCLUSIVIDADE = mean(DIVERSIDADE),
+              FORMACAO = mean(IN_FORM_DOCENTE))%>%ungroup()%>%gather("INDICE", "VALUE", "TITULACAO", "FORMACAO", "EXCLUSIVIDADE")
+}
+return(df33)
+
+})
+
+renderPlotly({
+  
+p33<- plotarLocal2()
+print('p33')
+glimpse(p33)
+
+print(ncol(p33))
+
+if (ncol(p33)== 3) {
+
+  
+  p33<- plot_ly(p33)
+  p33<- p33%>%add_trace(y= ~VALUE, x= ~CO_ANO, color = ~INDICE, type= 'scatter', mode= 'markers+lines')%>% 
+    layout(legend = list(orientation = 'h'), xaxis = list(title = " "), yaxis = list(title = " Indicador"), title = list( text = paste0("Índices docente ao longo dos anos - ",input$local2), size = 7))
+}
+
+else {
+  t <- list(size = 10)
+  a<- list(text= paste(" Probabilidade Quartil Superior"), font=  t,  xref = "paper",yref = "paper",yanchor = "bottom",xanchor = "center",align = "center",
+          x = 0.5,y = 1, showarrow = FALSE)
+  p33<- plot_ly(p33)%>%add_lines(x= ~CO_ANO, y = 0.25, line =list(width = 0.2, dash = 'dash', color = "black"), name = "Desejado")
+  p33<- p33%>%add_trace(y= ~VALUE, x= ~CO_ANO, color = ~INDICE, type= 'scatter', mode= 'markers+lines', hoverinfo = 'text',
+       text = ~paste0( '</br>', INDICE, ' : ' , '(', round(VALUE * 100, 1),'%', ', ',CO_ANO, ')',
+                           '</br> Total: ', N_DIM_Q,
+                           '</br> Federal: ', round(Federal * 100, 1),'%',
+                           '</br> Municipal+Estadual: ',  round(`Municipal+Estadual` * 100, 1),'%',
+                           '</br> Privada: ',  round(Privada * 100, 1), '%' ))%>% 
+  layout(legend = list(orientation = 'h'), xaxis = list(title = " "), yaxis = list(title = " Probabilidade"), title = list( text = paste0("Probabilidade de pertencer ao 1° quartil por nível de infra - [",input$local2,"]"), size = 7))
+  
+}
+ 
+p33
+})
+
+
+#plotlyOutput("fig33")
+
+```
+
+### 4 - **Nacional** {.nacional} 
+
+```{r,fig.height=3.5,fig.width=5}
+plotarNacional2 <- eventReactive(input$go2,{
+#filter<- input$dep_adm2
+df44<- geo_notas%>%filter(IN_TP_ESCOLA == input$dep_adm2)%>%
+    select(NU_NOTA_GERAL, CO_ANO, IN_TP_ESCOLA, IN_INFRA_NENHUMA, IN_INFRA_ELEMENTAR, 
+          IN_INFRA_BASICA, IN_INFRA_ADEQUADA, IN_INFRA_AVANCADA, TITULACAO, IN_FORM_DOCENTE, DIVERSIDADE)
+  
+
+if (req(input$dim2) == 'INFRA') {
+
+  print("INFRA")
+  df44<- df44%>%
+    group_by(CO_ANO)%>%
+    mutate(QUARTILE = ntile(NU_NOTA_GERAL, 4))%>% ungroup()%>%gather(INDICE, IN_INFRA, 4:8)%>% 
+    group_by(CO_ANO, INDICE)%>%
+    mutate(
+      N_DIM = sum(IN_INFRA))%>%ungroup()%>%
+    filter(QUARTILE ==4)%>%
+    group_by(CO_ANO, INDICE, IN_TP_ESCOLA)%>%
+    mutate(FRACAO = sum(IN_INFRA))%>%ungroup()%>%
+    group_by(CO_ANO, INDICE)%>%
+    mutate(
+      N_DIM_Q = sum(IN_INFRA),
+      VALUE = N_DIM_Q/N_DIM)%>%ungroup()
+         
+  df44<-df44%>%dplyr::select(CO_ANO, INDICE, VALUE, N_DIM, N_DIM_Q, IN_TP_ESCOLA, FRACAO)%>%distinct()    
+  df44<-df44 %>% pivot_wider(names_from = "IN_TP_ESCOLA", values_from = "FRACAO")
+ 
+
+  out<- as.list(c("Municipal+Estadual", "Federal","Privada")[!(
+    c("Municipal+Estadual", "Federal","Privada") %in% names(df44))])
+
+  for (i in out){
+    df44[[i]]<- 0}
+
+
+  df44<-df44%>%mutate(
+    Privada =  Privada/N_DIM_Q,
+    `Municipal+Estadual` = `Municipal+Estadual`/N_DIM_Q,
+    Federal= Federal/N_DIM_Q)%>%replace(is.na(.), 0)
+}
+
+else if (req(input$dim2)=="TITULACAO"){  
+  print("TITULACAO")
+  df44<- df44%>%group_by(CO_ANO)%>%
+    summarise(TITULACAO = mean(TITULACAO),
+              EXCLUSIVIDADE = mean(DIVERSIDADE),
+              FORMACAO = mean(IN_FORM_DOCENTE))%>%ungroup()%>%gather("INDICE", "VALUE", "TITULACAO", "FORMACAO", "EXCLUSIVIDADE")
+}
+return(df44)
+
+})
+
+renderPlotly({
+  
+p34<- plotarNacional2()
+print('p34')
+glimpse(p34)
+
+print(ncol(p34))
+
+if (ncol(p34)== 3) {
+
+  
+  p34<- plot_ly(p34)
+  p34<- p34%>%add_trace(y= ~VALUE, x= ~CO_ANO, color = ~INDICE, type= 'scatter', mode= 'markers+lines')%>% 
+    layout(legend = list(orientation = 'h'), xaxis = list(title = " "), yaxis = list(title = " Indicador"), title = list( text = paste("Índices docente ao longo dos anos - Nacional"), size = 7))
+}
+
+else {
+  t <- list(size = 10)
+  a<- list(text= paste(" Probabilidade Quarto Superior"), font=  t,  xref = "paper",yref = "paper",yanchor = "bottom",xanchor = "center",align = "center",
+          x = 0.5,y = 1, showarrow = FALSE)
+  p34<- plot_ly(p34)%>%add_lines(x= ~CO_ANO, y = 0.25, line =list(width = 0.2, dash = 'dash', color = "black"), name = "Desejado")
+  p34<- p34%>%add_trace(y= ~VALUE, x= ~CO_ANO, color = ~INDICE, type= 'scatter', mode= 'markers+lines', hoverinfo = 'text',
+       text = ~paste0( '</br>', INDICE, ' : ' , '(', round(VALUE * 100, 1),'%', ', ',CO_ANO, ')',
+                           '</br> Total: ', N_DIM_Q,
+                           '</br> Federal: ', round(Federal * 100, 1),'%',
+                           '</br> Municipal+Estadual: ',  round(`Municipal+Estadual` * 100, 1),'%',
+                           '</br> Privada: ',  round(Privada * 100, 1), '%' ))%>% 
+  layout(legend = list(orientation = 'h'), xaxis = list(title = " "), yaxis = list(title = " Probabilidade"), title = list( text = paste("Probabilidade de pertencer ao 1° quartil por nível de infra - Nacional"), size = 7))
+  
+}
+ 
+p34
+})
+ 
+ #plotlyOutput("fig34")
+
+```
+
+Aluno
+==================================================================
+Inputs {.sidebar data-width=200}
+----------------------------------------------------------------------
+
+**Analise os estudantes por diferentes dimensões e localidades.**
+
+Devido a grande quantidade de dados e às limitações do R Shiny, os gráficos dessa aba demoram cerca de **60s** para carregarem. 
+
+Aguarde, valerá a pena :)
+
+
+```{r, SIDEBARALUNO}
+#read_feather ("~/projects/panel/data/Sgeo_notas.feather")
+
+
+selectInput("dim", "Dimensão:",
+                c("Cor/Raça" = 'TP_COR_RACA',
+                  "Renda Mensal" = 'RENDA_MENSAL',
+                  "Escolaridade do Pai" = 'EDU_PAI',
+                  "Escolaridade da Mãe" = 'EDU_MAE',
+                  "Sexo" = 'TP_SEXO'))
+
+
+selectInput("ano", "Ano:",
+            c('2009', '2010', '2011', '2012', '2013','2014', '2015', '2016', '2017', '2018','2019'))
+
+
+selectInput('div', 'Tipo Região Adm:',
+            c('Estadual'="nome_uf", "Municipal" = 'nome', 'Mesorregião'='nome_meso'))
+
+observeEvent(input$div,{
+
+  tb_loc <- input$div
+  if(tb_loc == 'nome_uf'){
+    locs<- unique(Sgeo_notas$nome_uf)}
+  else if(tb_loc == 'nome'){
+    locs<- unique(Sgeo_notas$nome)}
+  else{
+    locs<- unique(Sgeo_notas$nome_meso)
+  }
+
+
+  updateSelectizeInput(session, 'local',
+                       choices = locs)
+})
+
+
+
+selectizeInput(
+        'local', 'Local', choices = NULL,
+        options = list(
+          placeholder = 'Escolha a localidade',
+          onInitialize = I('function() { this.setValue(""); }')
+        )
+      )
+
+
+
+selectInput("dep_adm", "Analise a série temporal apenas dos alunos das escolas:",
+            c('Municipais + Estaduais' = "Municipal+Estadual",
+              'Privadas' = "Privada",
+              'Federais' = "Federal"
+              ))
+
+actionButton("go", 'Plotar')
+
+
+
+```
+
+Column
+----------------------------------------------------------------------
+### Panorama do desempenho x nº inscritos X tipo de escola - **Local** (Esse gráfico não é responsivo (limitação ggigraph), ajuste o tamanho da tela para ver os 3 tipos de escolas)
+
+```{r, ALUNOLOCAL1, fig.height=3.5,fig.width=5}
+
+plotarLocal21<- eventReactive(input$go,{
+
+
+  df21<-Sgeo_notas%>%filter(get(input$div) == input$local)%>%
+    select(NU_NOTA_GERAL, CO_ANO, CO_UF, TP_COR_RACA, CO_DEPENDENCIA_ADM, RENDA_MENSAL, TP_SEXO, NU_NOTA_GERAL, EDU_PAI, EDU_MAE)
+
+  dim<- as.character(input$dim)
+  group_cols <- c("CO_DEPENDENCIA_ADM", as.character(input$dim))
+  df21 <-df21%>%filter(CO_ANO == input$ano)%>%
+    group_by(!!!syms(group_cols))%>%
+    summarise(
+      NU_NOTA_GERAL = mean(NU_NOTA_GERAL),
+      n = n())%>%
+    mutate(prop = prop.table(n),
+           total_group = sum(n)
+    )%>% ungroup()
+
+
+  df21<-df21%>%
+    group_by_at(input$dim)%>%
+    arrange(desc(CO_DEPENDENCIA_ADM))%>%
+    mutate(
+      ymax = cumsum(total_group)/sum(total_group),
+      ymin = (ymax-(total_group/sum(total_group)))
+    )%>% ungroup() %>%
+    group_by(CO_DEPENDENCIA_ADM)%>%
+    arrange_at(desc(input$dim))%>%
+    mutate(xmax= cumsum(prop), xmin = xmax - prop)%>%
+    ungroup()%>%
+    arrange(CO_DEPENDENCIA_ADM)
+
+
+  df21<-df21 %>%
+    mutate(
+      data_id = paste0(.data[[dim]], CO_DEPENDENCIA_ADM),
+      tooltip = paste0(
+        "<em>", CO_DEPENDENCIA_ADM, "</em><br>",
+        .data[[dim]], "- ", round(prop * 100, 1), "%<br>", "(",
+        prettyNum(round(NU_NOTA_GERAL), big.mark = " ", mode = "character"), " - Média Geral)"
+      )
+    ) %>%
+    mutate(tooltip = gsub("'", "`", tooltip))   # hack to escape single quote
+
+ df21<- list(df = df21, d = dim)
+ df21
+  })
+
+#### Plot
+
+
+renderggiraph({
+
+
+p21<- plotarLocal21()[['df']]
+dim<- plotarLocal21()[['d']]
+
+##labels
+labels <-p21 %>%
+  filter(.data[[dim]] == "Parda" | .data[[dim]] == 'Ens. Médio' | .data[[dim]] == '1 a 2 sal.'  | .data[[dim]] == 'Feminino') %>% group_by_at(dim)%>%
+  mutate(y = ymax - 0.01 , yRange = (ymax - ymin)) %>% ungroup()%>%
+  select(CO_DEPENDENCIA_ADM, xmin, y, yRange) %>%
+  ungroup()
+
+##chart
+#print(nrow(labels))
+p21<-ggplot(p21) +
+  ggiraph::geom_rect_interactive(
+    aes(ymin = ymin, ymax = ymax, xmin = xmin, xmax = xmax,
+                            fill = .data[[dim]], data_id = data_id, tooltip = tooltip), colour = "white", size = 0.2) +
+  geom_text(
+    data = labels,
+    aes(x= 0.5,y = y - (yRange/2) , label = as.character(CO_DEPENDENCIA_ADM)), size = 4,
+    hjust = 0.5, vjust = 0.5, colour = "black"
+  )
+
+p21<- p21 +
+  theme_minimal() +
+  scale_x_continuous(
+    position = "top", expand = c(0.01, 0.01),
+    labels = scales::percent, breaks = scales::pretty_breaks(n = 3)) +
+  scale_y_continuous(
+    expand = c(0,0), limits = c(0, 1)
+  ) +
+  scale_fill_brewer(palette = "viridis") +
+  theme(
+    axis.line.x = element_blank(),
+    axis.text.y = element_blank(),
+    axis.title = element_blank(),
+    legend.position = "top",
+    legend.title = element_blank()
+  )
+
+ #girafe( ggobj = gp2)
+ ggiraph({print(p21)}, width = 0.99)
+
+
+ })
+#
+
+#ggiraphOutput("fig21")
+```
+
+
+### Desempenho médio dos alunos no ENEM - **Local**
+
+```{r,ALUNOLOCAL2, fig.height=3.5,fig.width=5}
+plotarLocal<- eventReactive(input$go,{
+   withProgress(message = 'Carregando dados locais',
+                 detail = 'Aguarde...', value = 0, {
+      for (i in 1:15) {
+        incProgress(1/15)
+      }
+  dim<- input$dim
+  filter<- input$dep_adm
+  print(filter)
+  df23<-Sgeo_notas%>%filter(get(input$div) == input$local)%>%filter(CO_DEPENDENCIA_ADM ==input$dep_adm)%>%
+    select(NU_NOTA_GERAL, CO_ANO, CO_UF, TP_COR_RACA, CO_DEPENDENCIA_ADM, RENDA_MENSAL, TP_SEXO, NU_NOTA_GERAL, EDU_PAI, EDU_MAE)
+  group_cols <- c("CO_ANO", as.character(input$dim))
+
+  df23<-df23%>%
+   group_by(CO_ANO)%>%
+   mutate(
+     QUARTILE = ntile(NU_NOTA_GERAL, 4),
+     MEDIA_TODOS = mean(NU_NOTA_GERAL),
+     DP_TODOS = sd(NU_NOTA_GERAL))%>% ungroup()%>%
+   group_by(!!!syms(group_cols))%>%
+   mutate(
+     N_DIM = n())%>%
+   ungroup()
+
+   })
+df23<- list(df = df23, d = dim)
+
+
+})
+
+renderPlotly({
+
+
+
+  p28<- plotarLocal()[['df']]
+  dim<- plotarLocal()[['d']]
+  group_cols <- c("CO_ANO", dim)
+
+  p28<- p28%>%group_by(!!!syms(group_cols))%>%
+  summarise(
+    MEDIA_TODOS = MEDIA_TODOS,
+    MEDIA_DIM = mean(NU_NOTA_GERAL))%>%
+  ungroup()%>%distinct()
+
+
+  p28<- plot_ly(p28)%>%add_lines(x= ~CO_ANO, y = ~MEDIA_TODOS, line =list(width = 0.2, dash = 'dash', color = "black"), name = "Todos")
+  p28<-p28%>%add_trace(y= ~MEDIA_DIM, x= ~CO_ANO, color = interp(~x, x = as.name(dim)), type= 'scatter', mode= 'markers+lines')%>%
+  layout(legend = list(orientation = 'h'), xaxis = list(title = " "), yaxis = list(title = " Média geral"))
+
+  })
+
+#plotlyOutput('fig28')
+```
+
+### Discrepância do desempenho médio dos alunos no ENEM - **Local**
+
+```{r,ALUNOLOCAL3, fig.height=3.5,fig.width=5}
+renderPlotly({
+
+  p27<- plotarLocal()[['df']]
+  dim<- plotarLocal()[['d']]
+  group_cols <- c("CO_ANO", dim)
+
+  p27<- p27%>%group_by(!!!syms(group_cols))%>%
+  summarise(
+    DP_TODOS = DP_TODOS,
+    DP_DIM = sd(NU_NOTA_GERAL))%>%
+  ungroup()%>%distinct()
+
+  p27<- plot_ly(p27)%>%add_lines(x= ~CO_ANO, y = ~DP_TODOS, line =list(width = 0.2, dash = 'dash', color = "black"), name = "Desejado")
+  p27<-p27%>%add_trace(y= ~DP_DIM, x= ~CO_ANO, color = interp(~x, x = as.name(dim)), type= 'scatter', mode= 'markers+lines')%>%
+  layout(legend = list(orientation = 'h'), xaxis = list(title = " "), yaxis = list(title = " Desvio padrão - média geral"))
+
+})
+#plotlyOutput('fig27')
+```
+
+
+### Probabilidade de pertencer ao quarto superior -**Local**
+
+```{r, ALUNOOCAL4, fig.height=3.5,fig.width=5}
+
+
+# Graph
+renderPlotly({
+
+  withProgress(message = 'Plotando gráficos locais',
+                 detail = 'Aguarde...', value = 0, {
+      for (i in 1:15) {
+        incProgress(1/15)
+      }
+p23 <-plotarLocal()[['df']]
+dim <- plotarLocal()[['d']]
+group_cols <- c("CO_ANO", as.character(input$dim))
+glimpse(p23)
+
+p23<- p23%>%filter(QUARTILE ==4)
+p23<-cbind(p23, dummy( p23$CO_DEPENDENCIA_ADM, drop = FALSE, sep= '_'))%>%
+    rename('local' = 14)
+
+
+p23<- p23 %>% group_by(!!!syms(group_cols))%>%
+  summarise(
+    N_DIM_Q = n(),
+    local = sum(local)/N_DIM_Q,
+    FRACAO = N_DIM_Q/N_DIM)%>%
+  ungroup()%>%distinct()
+
+
+t <- list(
+  size = 10)
+a<- list(text= " Probabilidade Quartil Superior", font=  t,  xref = "paper",yref = "paper",yanchor = "bottom",xanchor = "center",align = "center",
+         x = 0.5,y = 1, showarrow = FALSE)
+
+p23<- plot_ly(p23)%>%add_lines(x= ~CO_ANO, y = 0.25, line =list(width = 0.2, dash = 'dash', color = "black"), name = "Desejado")
+p23<- p23%>%add_trace(y= ~FRACAO, x= ~CO_ANO, color = interp(~x, x = as.name(dim)), type= 'scatter', mode= 'markers+lines', hoverinfo = 'text',
+       text = ~paste0( '</br>', .data[[dim]], ' : ' , '(', round(FRACAO * 100, 1),'%', ', ',CO_ANO, ')',
+                           '</br> Total: ', N_DIM_Q))%>%
+  layout(legend = list(orientation = 'h'), xaxis = list(title = " "), yaxis = list(title = " Probabilidade"))
+
+})
+
+})
+
+#plotlyOutput('fig23')
+```
+
+Column
+------------------------------------------
+### Panorama do desempenho x nº inscritos X tipo de escola - **Nacional** (Esse gráfico não é responsivo (limitação ggigraph), ajuste o tamanho da tela para ver os 3 tipos de escolas) {.nacional}
+
+
+```{r, ALUNONACIONAL1, fig.height=3.5,fig.width=5}
+plotarBR<-eventReactive(input$go,{
+  withProgress(message = 'Carregando dados nacionais',
+                 detail = 'Aguarde...', value = 0, {
+      for (i in 1:15) {
+        incProgress(1/15)
+      }
+
+  df22<-Sgeo_notas%>%
+    select(NU_NOTA_GERAL,TP_COR_RACA, CO_DEPENDENCIA_ADM, RENDA_MENSAL, TP_SEXO, NU_NOTA_GERAL, EDU_PAI, EDU_MAE, CO_ANO)
+
+  dim<- as.character(input$dim)
+  group_cols <- c("CO_DEPENDENCIA_ADM", as.character(input$dim))
+  df22 <-df22%>%filter(CO_ANO == input$ano)%>%
+    group_by(!!!syms(group_cols))%>%
+    summarise(
+      NU_NOTA_GERAL = mean(NU_NOTA_GERAL),
+      n = n())%>%
+    mutate(prop = prop.table(n),
+           total_group = sum(n)
+    )%>% ungroup()
+
+
+  df22<-df22%>%
+    group_by_at(input$dim)%>%
+    arrange(desc(CO_DEPENDENCIA_ADM))%>%
+    mutate(
+      ymax = cumsum(total_group)/sum(total_group),
+      ymin = (ymax-(total_group/sum(total_group)))
+    )%>% ungroup() %>%
+    group_by(CO_DEPENDENCIA_ADM)%>%
+    arrange_at(desc(input$dim))%>%
+    mutate(xmax= cumsum(prop), xmin = xmax - prop)%>%
+    ungroup()%>%
+    arrange(CO_DEPENDENCIA_ADM)
+
+
+  df22<-df22 %>%
+    mutate(
+      data_id = paste0(.data[[dim]], CO_DEPENDENCIA_ADM),
+      tooltip = paste0(
+        "<em>", CO_DEPENDENCIA_ADM, "</em><br>",
+        .data[[dim]], "- ", round(prop * 100, 1), "%<br>", "(",
+        prettyNum(round(NU_NOTA_GERAL), big.mark = " ", mode = "character"), " - Média Geral)"
+      )
+    ) %>%
+    mutate(tooltip = gsub("'", "`", tooltip))   # hack to escape single quote
+
+ df22<- list(df = df22, d = dim)
+ #print(head(df22))
+ df22
+
+  })
+
+ })
+
+#### Plot
+
+
+
+renderggiraph({
+
+p22<- plotarBR()[['df']]
+dim<- plotarBR()[['d']]
+
+print(dim)
+##labels
+labels <-p22 %>%
+  filter(.data[[dim]] == "Parda" | .data[[dim]] == 'Ens. Médio' | .data[[dim]] == '1 a 2 sal.'  | .data[[dim]] == 'Feminino') %>% group_by_at(dim)%>%
+  mutate(y = ymax - 0.01 , yRange = (ymax - ymin)) %>% ungroup()%>%
+  select(CO_DEPENDENCIA_ADM, xmin, y, yRange) %>%
+  ungroup()
+
+##chart
+#print(nrow(labels))
+glimpse(p22)
+p22<-ggplot(p22) +
+  ggiraph::geom_rect_interactive(
+    aes(ymin = ymin, ymax = ymax, xmin = xmin, xmax = xmax,
+                            fill = .data[[dim]], data_id = data_id, tooltip = tooltip), colour = "white", size = 0.2) +
+  geom_text(
+    data = labels,
+    aes(x= 0.5,y = y - (yRange/2) , label = as.character(CO_DEPENDENCIA_ADM)), size = 4,
+    hjust = 0.5, vjust = 0.5, colour = "black"
+  )
+
+p22<- p22 +
+  theme_minimal() +
+  scale_x_continuous(
+    position = "top", expand = c(0.01, 0.01),
+    labels = scales::percent, breaks = scales::pretty_breaks(n = 3)) +
+  scale_y_continuous(
+    expand = c(0,0), limits = c(0, 1.02)
+  ) +
+  scale_fill_brewer(palette = "viridis") +
+  theme(
+    axis.line.x = element_blank(),
+    axis.text.y = element_blank(),
+    axis.title = element_blank(),
+    legend.position = "top",
+    legend.title = element_blank()
+  )
+#p22
+ #girafe( ggobj = gp2)
+ ggiraph({print(p22)}, width = 0.95)
+ #ggiraphOutput(outputId = "interactivePlot")
+
+ })
+#
+
+#ggiraphOutput("fig22")
+
+
+```
+
+### Desempenho médio dos alunos no ENEM - **Nacional** {.nacional}
+
+```{r, ALUNONACIONAL2, fig.height=3.5,fig.width=5}
+plotarBR2<- eventReactive(input$go, {
+  dim<- input$dim
+  filter<- input$dep_adm
+group_cols <- c("CO_ANO", as.character(input$dim))
+df_nacional<-Sgeo_notas%>%filter(CO_DEPENDENCIA_ADM ==input$dep_adm)%>%
+  select(NU_NOTA_GERAL, CO_ANO, CO_UF, TP_COR_RACA, CO_DEPENDENCIA_ADM, RENDA_MENSAL,
+                 TP_SEXO, NU_NOTA_GERAL, EDU_PAI, EDU_MAE)%>%
+  group_by(CO_ANO)%>%
+  mutate(
+    QUARTILE = ntile(NU_NOTA_GERAL, 4),
+    MEDIA_TODOS = mean(NU_NOTA_GERAL),
+    DP_TODOS = sd(NU_NOTA_GERAL))%>%
+  ungroup()%>%
+  group_by(!!!syms(group_cols))%>%
+  mutate(
+    N_DIM = n())%>%
+  ungroup()
+
+
+df_nacional<- list(df = df_nacional, d = dim)
+
+
+})
+
+
+#graph
+renderPlotly ({
+  p25<- plotarBR2()[['df']]
+  dim<- plotarBR2()[['d']]
+  group_cols <- c("CO_ANO", dim)
+
+  p25<- p25%>%group_by(!!!syms(group_cols))%>%
+  summarise(
+    MEDIA_TODOS = MEDIA_TODOS,
+    MEDIA_DIM = mean(NU_NOTA_GERAL))%>%
+  ungroup()%>%distinct()
+
+
+  p25<- plot_ly(p25)%>%add_lines(x= ~CO_ANO, y = ~MEDIA_TODOS, line =list(width = 0.2, dash = 'dash', color = "black"), name = "Todos")
+  p25<-p25%>%add_trace(y= ~MEDIA_DIM, x= ~CO_ANO, color = interp(~x, x = as.name(dim)), type= 'scatter', mode= 'markers+lines')%>%
+  layout(legend = list(orientation = 'h'), xaxis = list(title = " "), yaxis = list(title = " Média geral"))
+
+
+})
+#plotlyOutput('fig25')
+```
+
+### Discrepancia do desempenho médio dos estudantes no ENEM - **Nacional** {.nacional}
+```{r,ALUNONACIONAL4,fig.height=3.5,fig.width=5}
+renderPlotly ({
+  p26<- plotarBR2()[['df']]
+  dim<- plotarBR2()[['d']]
+  group_cols <- c("CO_ANO", dim)
+
+  p26<- p26%>%group_by(!!!syms(group_cols))%>%
+  summarise(
+    DP_TODOS = DP_TODOS,
+    DP_DIM = sd(NU_NOTA_GERAL))%>%
+  ungroup()%>%distinct()
+
+  p26<- plot_ly(p26)%>%add_lines(x= ~CO_ANO, y = ~DP_TODOS, line =list(width = 0.2, dash = 'dash', color = "black"), name = "Desejado")
+  p26<-p26%>%add_trace(y= ~DP_DIM, x= ~CO_ANO, color = interp(~x, x = as.name(dim)), type= 'scatter', mode= 'markers+lines')%>%
+  layout(legend = list(orientation = 'h'), xaxis = list(title = " "), yaxis = list(title = " Desvio padrão - média geral"))
+
+})
+#plotlyOutput('fig26')
+```
+
+###  Probabilidade de pertencer ao quarto superior - **Nacional** {.nacional}
+
+```{r, PROBABILIDADENACIONAL, fig.height=3.5, fig.width=5}
+
+renderPlotly({
+
+ withProgress(message = 'Plotando gráficos nacionais',
+                 detail = 'Aguarde...', value = 0, {
+      for (i in 1:15) {
+        incProgress(1/15)
+      }
+p24 <- plotarBR2()[['df']]
+dim <- plotarBR2()[['d']]
+
+
+p24<- p24%>%filter(QUARTILE ==4)
+
+
+p24<- cbind(p24, dummy( p24$CO_DEPENDENCIA_ADM, drop = FALSE, sep= '_'))%>%
+    rename('local' = 14)
+
+group_cols <- c("CO_ANO", dim)
+
+p24<- p24%>%group_by(!!!syms(group_cols))%>%
+   summarise(
+    N_DIM_Q = n(),
+    local = sum(local)/N_DIM_Q,
+    FRACAO = N_DIM_Q/N_DIM)%>%
+  ungroup()%>%distinct()
+
+
+
+t <- list(
+  size = 10)
+a<- list(text= " Probabilidade Quartil Superior", font=  t,  xref = "paper",yref = "paper",yanchor = "bottom",xanchor = "center",align = "center",
+         x = 0.5,y = 1, showarrow = FALSE)
+
+p24<- plot_ly(p24)%>%add_lines(x= ~CO_ANO, y = 0.25, line =list(width = 0.2, dash = 'dash', color = "black"), name = "Desejado")
+p24<-p24%>%add_trace(y= ~FRACAO, x= ~CO_ANO, color = interp(~x, x = as.name(dim)), type= 'scatter', mode= 'markers+lines', hoverinfo = 'text',
+       text = ~paste0( '</br>', .data[[dim]], ' : ' , '(', round(FRACAO * 100, 1),'%', ', ',CO_ANO, ')',
+                           '</br> Total: ', N_DIM_Q))%>% layout(legend = list(orientation = 'h'), xaxis = list(title = ""), yaxis = list(title = " Probabilidade"))
+
+      })
+})
+
+
+#plotlyOutput('fig24')
+
+```
+
+Edu Pais
+==================================================================
+Inputs {.sidebar data-width=350}
+----------------------------------------------------------------------
+A influência da educação dos pais no desempenho dos alunos pode ser apenas uma extensão às variáveis socioeconômicas - conhecidos determinantes do desempenho escolar. Afinal, pais com maior escolaridade tendem possuir melhores empregos, melhores salários e buscam melhores escolas. Um [artigo publicado no EDM 2020][10], ainda sim, sugeriu que a educação dos pais e professores devem ser o foco das políticas públicas em detrimento da infraestrutura escolar (com garantia  do básico).
+
+Dessa forma, a fim, de enteder a influẽncia da educação dos pais ao longo dos anos, uma análise de estratificação - não robusta a variáveis não observáveis-  permite visualizar a influência da educação dos pais na concentração de alunos pertencentes ao terceiro quartil de médias do ENEM controlando pela renda e nível de infraestrutura escolar.
+
+[10]: <https://www.google.com/url?sa=t&rct=j&q=&esrc=s&source=web&cd=&cad=rja&uact=8&ved=2ahUKEwiRyJiXlrbyAhUEKrkGHQ9FApwQFnoECAUQAQ&url=https%3A%2F%2Feducationaldatamining.org%2Ffiles%2Fconferences%2FEDM2020%2Fpapers%2Fpaper_55.pdf&usg=AOvVaw1R-U95MYOvphPpMYGySmFl>
+
+```{r}
+
+
+
+
+selectInput("INFRA", "Controle a Infraestrutura:",
+            c('ELEMENTAR' ='IN_INFRA_ELEMENTAR','BASICA'='IN_INFRA_BASICA', 'ADEQUADA'='IN_INFRA_ADEQUADA', 'AVANCADA'='IN_INFRA_AVANCADA'))
+
+
+sliderInput("range", 
+                  label = "Controle por renda per capita:",
+                  min = 0, max = 10000, value = c(119, 298))
+
+actionButton("go3", 'Plotar')
+
+Sgeo_notas_nacional<-Sgeo_notas%>%
+  select(CO_ANO, CO_DEPENDENCIA_ADM, EDU_PAI, EDU_MAE,
+                IN_INFRA_ELEMENTAR, IN_INFRA_BASICA, IN_INFRA_ADEQUADA,
+                IN_INFRA_AVANCADA, NU_NOTA_GERAL, RENDA_PERCAPITA)
+
+```
+
+Column
+------------------------------------------
+### Todos os alunos
+
+```{r}
+
+plotarcausal <- eventReactive(input$go3,{
+  sub<-Sgeo_notas_nacional%>%
+  filter(RENDA_PERCAPITA >= input$range[1] & RENDA_PERCAPITA <= input$range[2])%>%filter(get(input$INFRA) ==1)
+  
+})
+
+renderPlotly ({
+  sub<- plotarcausal()
+  sub<-sub%>%
+    mutate(
+  QUARTILE = ntile(NU_NOTA_GERAL, 4),
+)
+
+sub$QUARTILE<-if_else(sub$QUARTILE!=4, 0,1)
+
+trace1<- sub%>%group_by(EDU_MAE)%>%summarise(
+  prop = mean(QUARTILE),
+  quantidade = n()
+)
+
+trace2<- sub%>%group_by(EDU_PAI)%>%summarise(
+  prop = mean(QUARTILE),
+  quantidade = n()
+)
+
+
+
+plot_ly(trace1, x= ~EDU_MAE, y= ~prop, 
+        type ='scatter', mode ='lines', color = 'orange', name ='Educação da Mãe',
+        hoverinfo = 'text',
+            text = ~paste('</b>Educação do Mãe:</b> 
+                          </br> Proporção: ', trace1$prop,
+                          '</br> Quantidade de alunos: ', trace1$quantidade))%>%
+  add_trace(x =trace2$EDU_PAI, y= trace2$prop, 
+            mode = 'lines', color = 'blue', name = 'Educação do Pai',
+            hoverinfo = 'text',
+            text = ~paste('</b>Educação do Pai:</b> 
+                          </br> Proporção: ', trace2$prop,
+                          '</br> Quantidade de alunos: ', trace2$quantidade))%>%
+  layout(yaxis = list(title = 'Concentraçao de bons alunos'), xaxis = list(title =""))%>%
+  add_lines(x=trace1$EDU_MAE, y = 0.25, line =list(width = 0.2, dash = 'dash', color = "black"), name = 'Desejado')
+
+
+})
+
+#plotlyOutput('fig78')
+
+
+```
+
+### Alunos de escolas municipais + estaduais
+
+```{r}
+renderPlotly({
+sub2<- plotarcausal()
+glimpse(sub2)
+sub2<-sub2%>%filter(CO_DEPENDENCIA_ADM=='Municipal+Estadual')%>%
+    mutate(
+  QUARTILE = ntile(NU_NOTA_GERAL, 4),
+)
+
+sub2$QUARTILE<-if_else(sub2$QUARTILE!=4, 0,1)
+
+trace1<- sub2%>%group_by(EDU_MAE)%>%summarise(
+  prop = mean(QUARTILE),
+  quantidade = n()
+)
+
+trace2<- sub2%>%group_by(EDU_PAI)%>%summarise(
+  prop = mean(QUARTILE),
+  quantidade = n()
+)
+
+
+
+plot_ly(trace1, x= ~EDU_MAE, y= ~prop, 
+        type ='scatter', mode ='lines', color = 'orange', name ='Educação da Mãe',
+        hoverinfo = 'text',
+            text = ~paste('</b>Educação do Mãe:</b> 
+                          </br> Proporção: ', trace1$prop,
+                          '</br> Quantidade de alunos: ', trace1$quantidade))%>%
+  add_trace(x =trace2$EDU_PAI, y= trace2$prop, 
+            mode = 'lines', color = 'blue', name = 'Educação do Pai',
+            hoverinfo = 'text',
+            text = ~paste('</b>Educação do Pai:</b> 
+                          </br> Proporção: ', trace2$prop,
+                          '</br> Quantidade de alunos: ', trace2$quantidade))%>%
+  layout(yaxis = list(title = 'Concentraçao de bons alunos'), xaxis = list(title =""))%>%
+  add_lines(x=trace1$EDU_MAE, y = 0.25, line =list(width = 0.2, dash = 'dash', color = "black"), name = 'Desejado')
+})
+
+#plotlyOutput('fig79')
+
+```
+
+Column
+------------------------------------------
+### Alunos de escolas privadas
+```{r}
+
+renderPlotly({
+sub3<- plotarcausal()
+
+sub3<-sub3%>%filter(CO_DEPENDENCIA_ADM=='Privada')%>%
+    mutate(
+  QUARTILE = ntile(NU_NOTA_GERAL, 4),
+)
+
+sub3$QUARTILE<-if_else(sub3$QUARTILE!=4, 0,1)
+
+trace1<- sub3%>%group_by(EDU_MAE)%>%summarise(
+  prop = mean(QUARTILE),
+  quantidade = n()
+)
+
+trace2<- sub3%>%group_by(EDU_PAI)%>%summarise(
+  prop = mean(QUARTILE),
+  quantidade = n()
+)
+
+
+
+plot_ly(trace1, x= ~EDU_MAE, y= ~prop, 
+        type ='scatter', mode ='lines', color = 'orange', name ='Educação da Mãe',
+        hoverinfo = 'text',
+            text = ~paste('</b>Educação do Mãe:</b> 
+                          </br> Proporção: ', trace1$prop,
+                          '</br> Quantidade de alunos: ', trace1$quantidade))%>%
+  add_trace(x =trace2$EDU_PAI, y= trace2$prop, 
+            mode = 'lines', color = 'blue', name = 'Educação do Pai',
+            hoverinfo = 'text',
+            text = ~paste('</b>Educação do Pai:</b> 
+                          </br> Proporção: ', trace2$prop,
+                          '</br> Quantidade de alunos: ', trace2$quantidade))%>%
+  layout(yaxis = list(title = 'Concentraçao de bons alunos'), xaxis = list(title =""))%>%
+  add_lines(x=trace1$EDU_MAE, y = 0.25, line =list(width = 0.2, dash = 'dash', color = "black"), name = 'Desejado')
+})
+
+#plotlyOutput('fig80')
+
+```
+
+### Alunos de escolas federais
+
+```{r}
+
+renderPlotly({
+sub4<- plotarcausal()
+
+sub4<-sub4%>%filter(CO_DEPENDENCIA_ADM=='Federal')%>%
+    mutate(
+  QUARTILE = ntile(NU_NOTA_GERAL, 4),
+)
+
+sub4$QUARTILE<-if_else(sub4$QUARTILE!=4, 0,1)
+
+trace1<- sub4%>%group_by(EDU_MAE)%>%summarise(
+  prop = mean(QUARTILE),
+  quantidade = n()
+)
+
+trace2<- sub4%>%group_by(EDU_PAI)%>%summarise(
+  prop = mean(QUARTILE),
+  quantidade = n()
+)
+
+
+
+plot_ly(trace1, x= ~EDU_MAE, y= ~prop, 
+        type ='scatter', mode ='lines', color = 'orange', name ='Educação da Mãe',
+        hoverinfo = 'text',
+            text = ~paste('</b>Educação do Mãe:</b> 
+                          </br> Proporção: ', trace1$prop,
+                          '</br> Quantidade de alunos: ', trace1$quantidade))%>%
+  add_trace(x =trace2$EDU_PAI, y= trace2$prop, 
+            mode = 'lines', color = 'blue', name = 'Educação do Pai',
+            hoverinfo = 'text',
+            text = ~paste('</b>Educação do Pai:</b> 
+                          </br> Proporção: ', trace2$prop,
+                          '</br> Quantidade de alunos: ', trace2$quantidade))%>%
+  layout(yaxis = list(title = 'Concentraçao de bons alunos'), xaxis = list(title =""))%>%
+  add_lines(x=trace1$EDU_MAE, y = 0.25, line =list(width = 0.2, dash = 'dash', color = "black"), name = 'Desejado')
+
+})
+
+#plotlyOutput('fig81')
+
+```
+
+
+
+
+
+MD - Análise I
+===================================================================
+
+Inputs {.sidebar data-width=350}
+----------------------------------------------------------------------
+
+**Resumo:** Para cada ano no período 2009-2019, os dados do Enem e do Censo Escolar foram padronizados e, no grão escola, submetidos a modelos de classificação a fim de descrever uma escola boa ou ruim.
+
+Cada modelo teve seu poder discrimante avaliado pela Área sob a Curva ROc (AUC). As variáveis de maior relevância para o modelos são ilustradas nos gráficos.
+
+Para a Regressão Logística a relevância é demonstrada pelos Beta Coeficientes com nível de singnificância menor que 0,05. Para o Random Forest, é usado o Feature Importance.
+
+Os gráficos são interativos e é possível baixar ou consultar a tabela com os resultados dos modelos detalhados para cada ano.
+
+
+```{r}
+selectInput("model", "Modelo baseado em:",
+                c("Regressão Logística" = 'LogisticRegression',
+                  "Random Forest" = 'RandomForest'
+                  ))
+
+ selectInput("dep_adm3", "Tipo de escola:", 
+            c('Municipais + Estaduais' = "Municipal+Estadual",
+              'Privadas' = "Privada", 
+              'Federais' = "Federal"
+              ))                           
+
+ actionButton("go4", 'Plotar')  
+
+
+```
+
+Columns
+----------------------------------------------------------------------
+### Evolução da influencia das variáveis na qualidade das escolas do ensino médio
+```{r}
+
+plot_multi_years<-eventReactive(input$go4,{
+
+  dfmy<- result_models%>%filter(tp_escola == input$dep_adm3 & model == input$model)
+
+})
+
+
+renderPlotly({
+  labels <- c(EDU_MAE = "Educação da mãe", EDU_PAI = "Educação do pai", RENDA_PERCAPITA = "Renda per capita",
+            TP_COR_RACA_1.0 = "Raça branca", IN_BIBLIOTECA = "Biblioteca ", DIVERSIDADE = "Exclusividade docente", 
+            IN_ATIV_COMPLEMENTAR = "Atividade complementar", IN_EQUIP_PARABOLICA = "Antena parabólica",
+            IN_FORM_DOCENTE = "Formação docente", IN_LABORATORIO_CIENCIAS = "Lab. Ciências", 
+            IN_SALA_ATENDIMENTO_ESPECIAL = "Sala atendimento especial", IN_SALA_LEITURA ="Sala de Leitura", 
+            NU_ESCOLAS = "N° de cargos corpo docente", QT_COMP_ALUNO = "Computadores de alunos", QT_EQUIP_COPIADORA = "Copiadora",
+            QT_FUNCIONARIOS = "N° funcionários ", TITULACAO = "Titulação Docente", IN_BANHEIRO="Banheiro",
+            IN_BANHEIRO_PNE ="Banheiro PNE",IN_QUADRA_ESPORTES = "Quadra de esportes", 
+            QT_EQUIP_DVD = "Equipamento DVD", QT_EQUIP_IMPRESSORA = "Impressora", 
+            TP_COR_RACA_2.0="Raça preta", TP_COR_RACA_3.0 = "Raça parda", 
+            TP_COR_RACA_5.0 = "Indígena", NU_CIENCIA_NATUREZA = "N° prof. cie
+            ências da natu.",
+            NU_IDADE = "Idade", QT_EQUIP_TV = "Televisão", 
+            NU_CIENCIAS_HUMANAS = "N° professores ciências humanas", NU_LINGUAGENS_CODIGOS = "N° prof. ling. e cod.", IN_BANDA_LARGA ="Internet",
+            NU_LICENCIADOS = "N° prof. com licenciatura", QT_MATRICULAS ="N° de estudantes", TP_COR_RACA_4.0 = "Raça amarela",
+            TP_SEXO = "Gênero", NU_MATEMATICA = "N° prof. matemática", QT_SALAS_UTILIZADAS = "N° salas utilizadas")
+
+
+  
+  fmy<- plot_multi_years()%>%ungroup()
+  fmy<- fmy%>%group_by(term)%>%summarise(n=n(), estimate=estimate, year=year)%>%
+      filter(term!="(Intercept)")%>%ungroup()
+  fmy<-ggplot(fmy, aes(term, estimate))+ geom_boxplot() +geom_jitter(aes(colour = year))+
+    theme(axis.text.x = element_text(angle = 45, hjust =1))+xlab(NULL)+ylab("Importãncia das variáveis")+ 
+    theme(legend.position="right", legend.title = element_blank())+ 
+    scale_x_discrete(labels=labels) + 
+    geom_hline(yintercept=0, linetype="dashed", color = "red")+ labs(colour = "Anos") 
+
+
+fmy<- ggplotly(fmy)
+
+})
+```
+
+### Frequência da importância das variáveis por grupo
+```{r}
+renderPlotly({
+
+school_features = c(
+  'IN_LABORATORIO_INFORMATICA',
+  'IN_LABORATORIO_CIENCIAS',
+  'IN_SALA_ATENDIMENTO_ESPECIAL',
+  'IN_BIBLIOTECA',
+  'IN_SALA_LEITURA',
+  'IN_BANHEIRO',
+  'IN_BANHEIRO_PNE',
+  'QT_SALAS_UTILIZADAS',
+  'QT_EQUIP_TV',
+  'QT_EQUIP_DVD',
+  'QT_EQUIP_COPIADORA',
+  'QT_EQUIP_IMPRESSORA',
+  'QT_COMP_ALUNO',
+  'IN_BANDA_LARGA',
+  'QT_FUNCIONARIOS',
+  'IN_ALIMENTACAO',
+  'IN_COMUM_MEDIO_MEDIO',
+  'IN_COMUM_MEDIO_INTEGRADO',
+  'IN_COMUM_MEDIO_NORMAL',
+  'IN_SALA_PROFESSOR',
+  'IN_COZINHA',
+  'IN_EQUIP_PARABOLICA',
+  'IN_QUADRA_ESPORTES',
+  'IN_ATIV_COMPLEMENTAR',
+  'QT_MATRICULAS' 
+)
+
+teacher_features = c('TITULACAO', 'IN_FORM_DOCENTE','NU_LICENCIADOS', 
+                     'NU_CIENCIA_NATUREZA','NU_CIENCIAS_HUMANAS', 'NU_LINGUAGENS_CODIGOS', 'NU_MATEMATICA', 
+                     'NU_ESCOLAS', 'DIVERSIDADE')
+
+student_features =c('RENDA_PERCAPITA',  'EDU_PAI', 'EDU_MAE', 'NU_IDADE')
+
+
+non_actionable_features = c('TP_COR_RACA_0.0', 'TP_COR_RACA_1.0',
+                            'TP_COR_RACA_2.0', 'TP_COR_RACA_3.0', 'TP_COR_RACA_4.0',
+                            'TP_COR_RACA_5.0',  'TP_SEXO')
+
+
+histo<- plot_multi_years()%>%ungroup()
+#glimpse(histo)
+p1<-histo%>%filter(term %in% teacher_features)%>%
+  select(term, estimate, year)%>%mutate(grupo = "Variáveis - docentes")
+p2<-histo%>%filter(term %in% school_features)%>%
+  select(term, estimate, year)%>%mutate(grupo = "Variáveis - infra escola")
+p3<-histo%>%filter(term %in% student_features)%>%
+  select(term, estimate, year)%>%mutate(grupo = "Variáveis - estudante")
+p4<-histo%>%filter(term %in% non_actionable_features)%>%
+  select(term, estimate, year)%>%mutate(grupo = "Gênero e raça")
+histo<- rbind(p1,p2,p3,p4)
+histo<-histo%>%ggplot(aes(x=estimate, color=grupo))+geom_density(alpha=0.6)+
+  scale_fill_viridis(discrete=TRUE) + scale_color_viridis(discrete=TRUE) +
+  xlab("Importância das variáveis (quanto mais distante de zero, mais importante)")+ylab("Densidade")+theme(legend.title = element_blank()
+                                                  )+
+  geom_vline(xintercept=0, linetype="dashed", color = "red")
+
+
+histo<- ggplotly(histo)
+})
+```
+
+### fração da importância das variáveis por grupo ao longo dos anos
+```{r}
+renderPlotly({
+
+school_features = c(
+  'IN_LABORATORIO_INFORMATICA',
+  'IN_LABORATORIO_CIENCIAS',
+  'IN_SALA_ATENDIMENTO_ESPECIAL',
+  'IN_BIBLIOTECA',
+  'IN_SALA_LEITURA',
+  'IN_BANHEIRO',
+  'IN_BANHEIRO_PNE',
+  'QT_SALAS_UTILIZADAS',
+  'QT_EQUIP_TV',
+  'QT_EQUIP_DVD',
+  'QT_EQUIP_COPIADORA',
+  'QT_EQUIP_IMPRESSORA',
+  'QT_COMP_ALUNO',
+  'IN_BANDA_LARGA',
+  'QT_FUNCIONARIOS',
+  'IN_ALIMENTACAO',
+  'IN_COMUM_MEDIO_MEDIO',
+  'IN_COMUM_MEDIO_INTEGRADO',
+  'IN_COMUM_MEDIO_NORMAL',
+  'IN_SALA_PROFESSOR',
+  'IN_COZINHA',
+  'IN_EQUIP_PARABOLICA',
+  'IN_QUADRA_ESPORTES',
+  'IN_ATIV_COMPLEMENTAR',
+  'QT_MATRICULAS' 
+)
+
+teacher_features = c('TITULACAO', 'IN_FORM_DOCENTE','NU_LICENCIADOS', 
+                     'NU_CIENCIA_NATUREZA','NU_CIENCIAS_HUMANAS', 'NU_LINGUAGENS_CODIGOS', 'NU_MATEMATICA', 
+                     'NU_ESCOLAS', 'DIVERSIDADE')
+
+student_features =c('RENDA_PERCAPITA',  'EDU_PAI', 'EDU_MAE', 'NU_IDADE')
+
+
+non_actionable_features = c('TP_COR_RACA_0.0', 'TP_COR_RACA_1.0',
+                            'TP_COR_RACA_2.0', 'TP_COR_RACA_3.0', 'TP_COR_RACA_4.0',
+                            'TP_COR_RACA_5.0',  'TP_SEXO')
+
+
+histo2<- plot_multi_years()%>%ungroup()
+#glimpse(histo)
+p1<-histo2%>%filter(term %in% teacher_features)%>%
+  select(term, estimate, year)%>%mutate(grupo = "Variáveis - docentes")
+p2<-histo2%>%filter(term %in% school_features)%>%
+  select(term, estimate, year)%>%mutate(grupo = "Variáveis - infra escola")
+p3<-histo2%>%filter(term %in% student_features)%>%
+  select(term, estimate, year)%>%mutate(grupo = "Variáveis - estudantes")
+p4<-histo2%>%filter(term %in% non_actionable_features)%>%
+  select(term, estimate, year)%>%mutate(grupo = "Gênero e Raça")
+histo2<- rbind(p1,p2,p3,p4)
+  
+track_importance<-histo2%>%ungroup()%>%group_by(year)%>%slice_max(abs(estimate), n=6)
+glimpse(track_importance)
+
+ggplot(track_importance, aes(x=as.character(year), group=grupo, fill=grupo)) +
+       geom_density(adjust=0.5,position="fill") +xlab(NULL)+ylab("Fração")     
+})
+```
+
+### Tabela com os resultados de todos os modelos
+```{r}
+table41<- result_models
+
+renderDT({
+  DT::datatable(table41[,c('term', 'estimate','p.value','auc', 'year', 'tp_escola')],
+    rownames = FALSE,filter = 'top', options = list(pageLength = 10)
+  )
+})
+
+```
+
+MD - Análise II- Causalidade
+===================================================================
+Inputs {.sidebar data-width=350}
+----------------------------------------------------------------------
+
+**Resumo:** Nesta análise o comportamento longitudinal dos dados do estudo anterior foram considerados. Dessa forma foi possível verificar em uma abodagem causal intervenções que favoreceeram o desempenho escolar ao longo dos anos. 
+
+Um modelo de efeitos-fixos sob regressão logística foi implementado para 10 diferentes períodos e em uma configuração de validação cruzada avaliada pela AUC. O primeiro período tem início de 2009 até 2019 e apenas as escolas que se repetem em todos os anos foram consideradas. Os outros períodos tem o ínicio variando de 2010 a 2018, sempre terminando em 2019. 
+
+Para uma leitura causal devemos assumir principalmente: 1) que as variavéis que impactam a qualidade das escolas e que não estão presentes nas bases de dados são oriundas principalmente da política individual de cada escola e de cada estado, b) qualquer que seja essa influência, ela é contante para uma determinada escola e para um determinado estado no período analisado
+
+
+**Como interpretar o gráfico:** Variàveis com os maiores betas coefficientes em valor absoluto estão relacionadas de maneira causal com a evolução das escolas (betas positivos) ou com sua a sua piora (betas negativos) no período analisado assumindo as premissas relacionadas ao modelo.
+
+```{r}
+selectInput("dep_adm4", "Tipo de escola:", 
+            c('Municipais + Estaduais' = "Municipal+Estadual"))               
+```
+
+
+Column {data-weigth =400}
+------------------------------------------
+### Evolução da influencia das variáveis na evolução da qualidade das escolas do ensino médio
+```{r}
+#read_feather ("~/projects/panel/data/ia_group_analysis.feather")
+
+
+renderPlotly({
+  
+  labels <- c(EDU_MAE = "Educação da mãe", EDU_PAI = "Educação do pai", RENDA_PERCAPITA = "Renda per capita",
+            TP_COR_RACA_1.0 = "Raça branca", IN_BIBLIOTECA = "Biblioteca ", DIVERSIDADE = "Exclusividade docente", 
+            IN_ATIV_COMPLEMENTAR = "Atividade complementar", IN_EQUIP_PARABOLICA = "Antena parabólica",
+            IN_FORM_DOCENTE = "Formação docente", IN_LABORATORIO_CIENCIAS = "Lab. Ciências", 
+            IN_SALA_ATENDIMENTO_ESPECIAL = "Sala atendimento especial", IN_SALA_LEITURA ="Sala de Leitura", 
+            NU_ESCOLAS = "N° cargos docentes", QT_COMP_ALUNO = "Computadores de alunos", QT_EQUIP_COPIADORA = "Copiadora",
+            QT_FUNCIONARIOS = "N° funcionários ", TITULACAO = "Titulação Docente", IN_BANHEIRO="Banheiro",
+            IN_BANHEIRO_PNE ="Banheiro PNE",IN_QUADRA_ESPORTES = "Quadra de esportes", 
+            QT_EQUIP_DVD = "Equipamento DVD", QT_EQUIP_IMPRESSORA = "Impressora", 
+            TP_COR_RACA_2.0="Raça preta", TP_COR_RACA_3.0 = "Raça parda", 
+            TP_COR_RACA_5.0 = "Indígena", NU_CIENCIA_NATUREZA = "N° prof. cieências da natureza",
+            NU_IDADE = "Idade", QT_EQUIP_TV = "Televisão", 
+            NU_CIENCIAS_HUMANAS = "N° prof. ciências humanas.", NU_LINGUAGENS_CODIGOS = "N° prof. linguagens e cod.", IN_BANDA_LARGA ="Internet",
+            NU_LICENCIADOS = "N° professores com licenciatura", QT_MATRICULAS ="N° de estudantes", TP_COR_RACA_4.0 = "Raça amarela",
+            TP_SEXO = "Gênero", NU_MATEMATICA = "N° professores mat.", QT_SALAS_UTILIZADAS = "N° salas utilizadas")
+
+  
+fig51<- result_models_fixed_effects%>%filter(tp_escola == "Municipal+Estadual")
+glimpse(fig51)
+fig51<- fig51%>%group_by(term)%>%summarise(n=n(), estimate=estimate, year=list_years)%>%
+    filter(term!="(Intercept)")
+fig51<-ggplot(fig51, aes(term, estimate))+ geom_boxplot() +geom_jitter(aes(colour = year))+
+theme(axis.text.x = element_text(angle = 45, hjust =1))+xlab(NULL)+ylab("Beta Coefficients")+ 
+  theme(legend.position="right", 
+        legend.title = element_blank())+ 
+  scale_x_discrete(labels=labels) + 
+  geom_hline(yintercept=0, linetype="dashed", color = "red")+ labs(colour = "Years") 
+
+
+fig51<- ggplotly(fig51)
+})
+#plotlyOutput('fig51')
+```
+
+
+
+Sobre
+==================================================================
+
+Este painel tem o intuito de explorar sob diferentes aspectos os dados do ENEM e Censo escolar no perído de 2009 a 2019. 
+
+Os dados foram padronizados para uma adequada comparação ao longo dos anos, permitindo uma interativa análise exploratória baseada em histórícas discussões acerca da educação brasileira. 
+
+**Os principais objetivos do Painel são**: 
+a) analisar as principais dimensões presentes nas discussões da educação nacional e que são observáveis nas bases de dados, 
+
+b) observar o comportamento dos determinantes do ensino médio ao ao longo dos anos, 
+
+c) detectar intervenções relacionadas à evolução da qualidade das escolas de ensino médio .
+
+Espera-se que este painel possa servir de subsídio para especialistas da educação em suas pesquisas e análises. 
+Além disso, comentários e críticas de colegas que trabalham com Educação,  Mineração de Dados e Suporte a Decisão são muito bem-vindos.
+
+
+Autores: 
+- [Rogerio Luiz](https://github.com/rogerioluizsi){target="_blank"}
+- [Paulo Adeodato](https://lemanncenter.stanford.edu/people/paulo-adeodato){target="_blank"}
+- [Kellyton Brito](https://https://kellyton.com.br/){target="_blank"}
+
+
+Referências
+
+
+[1] - [Classificação da Infraesturura escolar](http://www.fcc.org.br/pesquisa/publicacoes/eae/arquivos/1786/1786.pdf)
+
+[2] - [Indicador titulação docente ](https://link.springer.com/chapter/10.1007/978-3-319-24834-9_18)
+
+[3] - [Eucação dos pais e professores mais influentes que infraestrutura escolar](https://educationaldatamining.org/files/conferences/EDM2020/papers/paper_55.pdf)
+
+[4] - [Metodologia de mineração de dados ](https://www.semanticscholar.org/paper/Data-Mining-Solution-for-Assessing-Brazilian-School-Adeodato/af2c474bd7a8b981ea35a9901649589598107d0c)
+
+[5] - [Metodologia de mineração de dados](https://ieeexplore.ieee.org/document/8923965)  
+
+[6] - [Painel Interativo - Uma década do Ensino Médio brasileiro](https://medium.com/@rogerio.luiz/painel-interativo-uma-d%C3%A9cada-do-ensino-m%C3%A9dio-brasileiro-1c077f260349)
+
+<style>
+  .nacional {
+    background-color: lightcyan;
+  }
+</style>
